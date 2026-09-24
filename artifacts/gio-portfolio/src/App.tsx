@@ -69,7 +69,7 @@ function Footer() {
   return (
     <footer className="site-footer" data-testid="site-footer">
       <div className="footer-inner">
-        <p className="footer-note">Editing time into feeling.</p>
+        <p className="footer-note">VIDEO EDITOR / MOTION DESIGNER</p>
         <div className="footer-links">
           <a href="mailto:hello@giooliveira.com" data-testid="link-footer-email">Email</a>
           <a href="https://www.instagram.com" target="_blank" rel="noreferrer" data-testid="link-footer-instagram">Instagram</a>
@@ -205,11 +205,8 @@ function Home() {
       </section>
       <section className="point-of-view" data-testid="section-home-about">
         <div className="page-width point-grid">
-          <Eyebrow>Point of view</Eyebrow>
-          <div>
-            <p className="statement">Good editing is a kind of listening. It knows when to move, when to stay, and when a quiet frame is doing all the work.</p>
-            <Link href="/about" className="text-link" data-testid="link-read-about">More about Gio <ArrowUpRight size={14} strokeWidth={1.3} /></Link>
-          </div>
+          <Eyebrow>Work</Eyebrow>
+          <div><p className="statement">Selected work.</p></div>
         </div>
       </section>
       <ContactBand />
