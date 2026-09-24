@@ -185,11 +185,11 @@ function Home() {
         <div className="page-width">
           <Reveal><Eyebrow>Independent editor / motion designer</Eyebrow></Reveal>
           <div className="hero-copy">
-            <div className="clip-reveal"><h1 className="hero-title">Gio Oliveira</h1></div>
+            <div className="clip-reveal"><h1 className="hero-title">Gio</h1></div>
             <Reveal delay={1}><p className="hero-role">Video editor /<br />Motion designer</p></Reveal>
           </div>
           <Reveal delay={2} className="hero-intro">
-            <p>I edit videos, build motion systems, and make things move.</p>
+            <p>Editing videos, building motion systems, and making things move.</p>
             <span className="hero-location">Based in Japan<br />Available worldwide</span>
           </Reveal>
         </div>
