@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Gio — Motion Portfolio"
+description = "A cinematic, editorial portfolio for Gio, a video editor and motion designer, with featured work, project detail views, and responsive interactions."
+version = "1.0.0"
+id = "artifacts/gio-portfolio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21719
+
+[services.development]
+run = "pnpm --filter @workspace/gio-portfolio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gio-portfolio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gio-portfolio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21719"
+BASE_PATH = "/"
