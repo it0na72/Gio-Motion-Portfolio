@@ -140,7 +140,7 @@ const translations = {
     filters: { all: 'TODOS', motion: 'MOTION DESIGN', editing: 'EDIÇÃO DE VÍDEO' },
     work: {
       archiveEyebrow: 'Arquivo / trabalho selecionado',
-      title: 'O trabalho',
+      title: 'Vídeos',
       lead: 'Edição de vídeo e motion design, com o contexto de cada projeto visível.',
       countSuffix: 'projetos / em preenchimento',
     },
@@ -175,7 +175,7 @@ const translations = {
       sendMessage: 'Enviar mensagem',
     },
     footer: {
-      role: 'EDITOR DE VÍDEO / DESIGNER DE MOTION',
+      role: 'EDITOR DE VÍDEO / motion designer',
       email: 'Email',
     },
     project: {

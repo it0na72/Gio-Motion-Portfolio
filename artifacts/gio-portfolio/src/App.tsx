@@ -42,7 +42,7 @@ function Header() {
   return (
     <header className="site-header" data-testid="site-header">
       <div className="header-inner">
-        <Link href="/" className="wordmark" data-testid="link-home">Gio Oliveira</Link>
+        <Link href="/" className="wordmark" data-testid="link-home">Gio</Link>
         <div className="header-actions">
           <nav className="desktop-nav" aria-label={t.navigation.primary}>
             {links.map((link) => (
@@ -92,7 +92,7 @@ function Footer() {
         <div className="footer-links">
           <a href="mailto:hello@giooliveira.com" data-testid="link-footer-email">{t.footer.email}</a>
           <a href="https://www.instagram.com" target="_blank" rel="noreferrer" data-testid="link-footer-instagram">Instagram</a>
-          <span>© {new Date().getFullYear()} Gio Oliveira</span>
+          <span>© Gio</span>
         </div>
       </div>
     </footer>
