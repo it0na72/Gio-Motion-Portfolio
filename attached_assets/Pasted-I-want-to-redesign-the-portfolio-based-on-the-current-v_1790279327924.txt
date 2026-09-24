@@ -1,0 +1,277 @@
+I want to redesign the portfolio based on the current version, but keep the strong editorial/art-directed visual direction.
+
+The current design is visually good, but it feels too much like a photography/editorial portfolio. This is a portfolio for a VIDEO EDITOR and MOTION DESIGNER, so the actual video work needs to be the central focus.
+
+IMPORTANT:
+I do NOT have a showreel yet. Do not create a fake showreel or make the website depend on a single hero video.
+
+Instead, build the portfolio around multiple individual video projects.
+
+CORE DIRECTION
+
+Keep:
+- editorial typography
+- large elegant serif headlines
+- minimal layout
+- lots of negative space
+- asymmetric editorial grid
+- subtle borders and small metadata labels
+- refined, cinematic feeling
+- restrained animations
+- premium creative-studio aesthetic
+
+Change:
+- remove the fake photography projects
+- remove all placeholder photography
+- remove the "showreel" concept
+- make video the primary visual medium
+- make the portfolio feel like a professional motion designer / editor's website
+
+HOMEPAGE STRUCTURE
+
+1. Minimal navigation
+
+Gio Oliveira
+
+Work
+About
+Contact
+
+2. HERO
+
+Instead of "Gio edits time.", use:
+
+Gio Oliveira
+
+Video editor / Motion designer
+
+I edit videos, build motion systems, and make things move.
+
+Keep the hero very minimal and editorial.
+
+3. SELECTED WORK
+
+Create a large "Selected Work" section.
+
+This should be the main focus of the homepage.
+
+I have multiple projects in different aspect ratios:
+- 16:9 landscape videos
+- 9:16 vertical Reels/TikToks
+- potentially other formats
+
+DO NOT force all projects into identical rectangles.
+
+Use an art-directed asymmetric masonry/editorial layout where each video's native aspect ratio is preserved.
+
+The grid should feel intentional rather than like a standard portfolio card grid.
+
+4. VIDEO PROJECTS
+
+Each project should support:
+
+- video
+- project title
+- category
+- year
+- optional client
+- optional description
+- optional software/tools
+- aspect ratio preserved
+
+Videos should:
+- autoplay muted when appropriate
+- loop
+- have controls available when clicked
+- have a subtle play indicator
+- have a polished hover interaction
+- load efficiently
+- not slow down the entire page
+
+For vertical 9:16 videos, preserve the vertical format rather than cropping them into landscape.
+
+For 16:9 videos, preserve the landscape format.
+
+5. FILTERING
+
+Add a very minimal filter:
+
+ALL
+MOTION DESIGN
+VIDEO EDITING
+
+Keep it subtle and editorial.
+
+No large pill-shaped UI or generic SaaS-style buttons.
+
+6. PROJECT DETAIL PAGES
+
+Clicking a project should open a dedicated project page.
+
+The project page should contain:
+
+PROJECT TITLE
+CATEGORY / YEAR
+
+Large video player
+
+Short project description
+
+My role:
+Editing / Motion Design / etc.
+
+Software:
+After Effects / Premiere Pro / Blender / etc.
+
+Then additional videos or images if available.
+
+Add previous/next project navigation at the bottom.
+
+7. ABOUT
+
+Keep this extremely concise.
+
+Example:
+
+I'm Gio, a video editor and motion designer currently based in Japan.
+
+I've spent the last several years working with video, motion design, Japanese content and digital storytelling.
+
+Focus:
+Video Editing
+Motion Design
+After Effects
+Premiere Pro
+Blender
+
+Do not turn this into a long biography.
+
+8. CONTACT
+
+Very simple:
+
+Have a project in mind?
+
+hello@...
+
+Also include Instagram / YouTube if appropriate.
+
+VISUAL IDENTITY
+
+I want the website to share a visual relationship with my other brand, Luso Nihongo.
+
+Use the existing Luso Nihongo brand colour palette as inspiration / reference, but DO NOT make this website look like an education platform.
+
+The portfolio should primarily use:
+- warm off-white / cream
+- near-black
+- muted grey
+- Luso Nihongo's primary accent colour
+
+Use the accent colour sparingly for interactive elements, small labels, hover states, lines and occasional visual moments.
+
+Do not use lots of different colours.
+
+TYPOGRAPHY
+
+Keep the editorial serif typography for major headlines.
+
+Pair it with a clean modern sans-serif for:
+- navigation
+- metadata
+- project information
+- buttons
+- small labels
+
+Typography should feel like a high-end creative studio / editorial publication.
+
+MOTION
+
+Since this is a motion designer's portfolio, the website itself should demonstrate good motion design.
+
+Use subtle:
+- page transitions
+- text reveals
+- image/video reveals
+- hover movement
+- smooth scrolling
+- cursor/play interactions
+- project transitions
+
+But avoid excessive animations.
+
+The animation should communicate taste and restraint.
+
+IMPORTANT DESIGN PRINCIPLE
+
+The website should feel like:
+
+"this person makes excellent videos"
+
+not:
+
+"this person made a website with lots of fancy effects."
+
+The work itself should always be the most visually important element.
+
+RESPONSIVE DESIGN
+
+Desktop:
+- large editorial composition
+- asymmetric project grid
+- generous whitespace
+
+Mobile:
+- prioritize the videos
+- preserve 9:16 videos naturally
+- make 16:9 videos full-width
+- simplify the grid
+- maintain typography hierarchy
+- keep navigation extremely simple
+
+CONTENT STRUCTURE
+
+Make the project data easy to edit.
+
+I want to be able to add a new project by changing a simple project object/data structure rather than manually rebuilding the page.
+
+Each project should support:
+
+title
+category
+year
+client
+description
+video URL
+thumbnail
+aspectRatio
+role
+software
+
+Do not populate the portfolio with fake projects once I start adding my real work.
+
+Use clearly marked placeholders for my actual videos.
+
+OVERALL GOAL
+
+This should look like the portfolio of an experienced freelance video editor and motion designer.
+
+Minimal.
+Editorial.
+Cinematic.
+Creative.
+Fast.
+Video-first.
+
+Avoid:
+- generic AI portfolio aesthetics
+- SaaS design
+- excessive rounded cards
+- gradients
+- unnecessary icons
+- stock photography
+- fake testimonials
+- fake clients
+- fake statistics
+- fake showreel
+- excessive text
