@@ -9,10 +9,11 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   motion,
+  useReducedMotion,
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { ArrowUpRight, Mail, Menu, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Mail, Menu, Play, Volume2, VolumeX, X } from "lucide-react";
 import {
   Link,
   Route,
@@ -30,6 +31,10 @@ import "@/index.css";
 
 const queryClient = new QueryClient();
 type Filter = "ALL" | "MOTION DESIGN" | "VIDEO EDITING";
+
+function PageTransition({ active }: { active: boolean }) {
+  return <div className={`page-transition ${active ? "is-active" : ""}`} aria-hidden="true" />;
+}
 
 function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -210,6 +215,15 @@ function Footer() {
           >
             Instagram
           </a>
+          <button
+            type="button"
+            className="back-to-top"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            data-testid="button-back-to-top"
+          >
+            <ArrowUp size={13} strokeWidth={1.4} />
+            {t.footer.backToTop}
+          </button>
           <span>© Gio</span>
         </div>
       </div>
@@ -218,15 +232,43 @@ function Footer() {
 }
 
 function Layout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [atPageEnd, setAtPageEnd] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
   useEffect(() => {
+    const handleNavigation = (event: globalThis.MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest<HTMLAnchorElement>("a[href]");
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      event.preventDefault();
+      const nextLocation = `${url.pathname}${url.search}${url.hash}`;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        navigate(nextLocation);
+        return;
+      }
+      setIsTransitioning(true);
+      const changeRoute = window.setTimeout(() => navigate(nextLocation), 430);
+      const finishTransition = window.setTimeout(() => setIsTransitioning(false), 900);
+      window.addEventListener("beforeunload", () => {
+        window.clearTimeout(changeRoute);
+        window.clearTimeout(finishTransition);
+      }, { once: true });
+    };
+    document.addEventListener("click", handleNavigation, true);
+    return () => document.removeEventListener("click", handleNavigation, true);
+  }, [location, navigate]);
+  useEffect(() => {
     const updatePageEnd = () => {
       const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
       setAtPageEnd(remaining <= 24);
+      setIsScrolled(window.scrollY > 24);
     };
     updatePageEnd();
     window.addEventListener("scroll", updatePageEnd, { passive: true });
@@ -237,11 +279,55 @@ function Layout({ children }: { children: ReactNode }) {
     };
   }, []);
   return (
-    <div className={`site-shell ${atPageEnd ? "is-at-page-end" : ""}`}>
+    <div
+      className={`site-shell ${atPageEnd ? "is-at-page-end" : ""} ${isScrolled ? "is-scrolled" : ""}`}
+    >
+      <PageTransition active={isTransitioning} />
       <Header />
       <main>{children}</main>
       <Footer />
     </div>
+  );
+}
+
+function MagneticLink({
+  href,
+  className,
+  children,
+  testId,
+}: {
+  href: string;
+  className?: string;
+  children: ReactNode;
+  testId?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const smoothX = useSpring(x, { stiffness: 240, damping: 18, mass: 0.25 });
+  const smoothY = useSpring(y, { stiffness: 240, damping: 18, mass: 0.25 });
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      ref={ref}
+      className="magnetic-link-wrap"
+      style={{ x: smoothX, y: smoothY }}
+      onMouseMove={(event) => {
+        if (prefersReducedMotion || !ref.current) return;
+        const bounds = ref.current.getBoundingClientRect();
+        x.set((event.clientX - bounds.left - bounds.width / 2) * 0.12);
+        y.set((event.clientY - bounds.top - bounds.height / 2) * 0.12);
+      }}
+      onMouseLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
+    >
+      <Link href={href} className={className} data-testid={testId}>
+        {children}
+      </Link>
+    </motion.div>
   );
 }
 
@@ -268,31 +354,46 @@ function PlaceholderVisual({ project }: { project: Project }) {
 function MediaVisual({
   project,
   showVideo = false,
+  priority = false,
 }: {
   project: Project;
   showVideo?: boolean;
+  priority?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaFrameRef = useRef<HTMLDivElement>(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(priority);
   const [isMuted, setIsMuted] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
   const mediaScale = useMotionValue(1);
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
   const smoothX = useSpring(parallaxX, { stiffness: 180, damping: 24, mass: 0.45 });
   const smoothY = useSpring(parallaxY, { stiffness: 180, damping: 24, mass: 0.45 });
   const smoothScale = useSpring(mediaScale, { stiffness: 180, damping: 24, mass: 0.45 });
+  const smoothTiltX = useSpring(tiltX, { stiffness: 180, damping: 24, mass: 0.45 });
+  const smoothTiltY = useSpring(tiltY, { stiffness: 180, damping: 24, mass: 0.45 });
   const { t } = useLanguage();
   const handleMediaMove = (event: MouseEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-    parallaxX.set(x * -20);
-    parallaxY.set(y * -20);
+    event.currentTarget.style.setProperty("--pointer-x", `${(x + 0.5) * 100}%`);
+    event.currentTarget.style.setProperty("--pointer-y", `${(y + 0.5) * 100}%`);
+    if (!prefersReducedMotion) {
+      parallaxX.set(x * -20);
+      parallaxY.set(y * -20);
+      tiltX.set(y * -3.5);
+      tiltY.set(x * 3.5);
+    }
   };
   const resetMediaMotion = () => {
     parallaxX.set(0);
     parallaxY.set(0);
+    tiltX.set(0);
+    tiltY.set(0);
     mediaScale.set(1);
   };
   const toggleAudio = () => {
@@ -325,6 +426,11 @@ function MediaVisual({
     return () => observer.disconnect();
   }, [project.videoUrl]);
   useEffect(() => {
+    if (shouldLoad && !prefersReducedMotion && videoRef.current) {
+      void videoRef.current.play();
+    }
+  }, [prefersReducedMotion, shouldLoad]);
+  useEffect(() => {
     const handleOtherVideoAudio = (event: Event) => {
       const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
       if (activeVideo !== videoRef.current) {
@@ -340,14 +446,21 @@ function MediaVisual({
     <motion.div
       ref={mediaFrameRef}
       className={`media-frame ${project.aspectRatio === "9/16" ? "is-vertical" : ""}`}
-      style={{ aspectRatio: project.aspectRatio }}
+      style={{
+        aspectRatio: project.aspectRatio,
+        rotateX: smoothTiltX,
+        rotateY: smoothTiltY,
+        transformPerspective: 900,
+      }}
       data-testid={`media-${project.slug}`}
       initial={{ opacity: 0, scale: 0.96, y: 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       whileHover={{ scale: 1.025, y: -8 }}
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
       onMouseMove={handleMediaMove}
-      onMouseEnter={() => mediaScale.set(1.06)}
+      onMouseEnter={() => {
+        if (!prefersReducedMotion) mediaScale.set(1.045);
+      }}
       onMouseLeave={resetMediaMotion}
     >
       {project.videoUrl && shouldLoad ? (
@@ -358,9 +471,10 @@ function MediaVisual({
           src={project.videoUrl}
           poster={project.thumbnail || undefined}
           muted={isMuted}
+          autoPlay={!prefersReducedMotion}
           loop
           playsInline
-          preload="none"
+          preload={priority ? "auto" : "none"}
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
@@ -427,7 +541,7 @@ function ProjectCard({
         className="project-card group"
         data-testid={`card-project-${project.slug}`}
       >
-        <MediaVisual project={project} showVideo />
+        <MediaVisual project={project} showVideo priority={index === 0} />
         <div className="project-card-meta">
           <div>
             <motion.h3
@@ -623,14 +737,14 @@ function ContactBand() {
             <br />
             <i>{t.contact.bandTitleSecond}</i>
           </h2>
-          <Link
+          <MagneticLink
             href="/contact"
             className="text-link light"
-            data-testid="link-start-conversation"
+            testId="link-start-conversation"
           >
             {t.contact.startConversation}{" "}
             <ArrowUpRight size={14} strokeWidth={1.3} />
-          </Link>
+          </MagneticLink>
         </div>
       </div>
     </section>
@@ -683,6 +797,10 @@ function Contact() {
               <div className="sent-message" data-testid="status-contact-sent">
                 <p>{t.contact.messageNoted}</p>
                 <span>{t.contact.thanks}</span>
+                <span>{t.contact.confirmationDetails}</span>
+                <a className="text-link" href="mailto:gio@lusonihongo.com">
+                  {t.contact.emailDirect}
+                </a>
                 <button
                   type="button"
                   className="text-link"
@@ -724,6 +842,14 @@ function Contact() {
                 }}
                 data-testid="form-contact"
               >
+                <input
+                  className="contact-trap"
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
                 <label>
                   <span>{t.contact.name}</span>
                   <input

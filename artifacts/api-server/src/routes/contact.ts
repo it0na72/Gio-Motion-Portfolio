@@ -3,6 +3,9 @@ import { Resend } from "resend";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
+const contactAttempts = new Map<string, { count: number; resetAt: number }>();
+const contactWindowMs = 15 * 60 * 1000;
+const maxContactAttempts = 5;
 
 const escapeHtml = (value: string) =>
   value.replace(
@@ -18,7 +21,28 @@ const escapeHtml = (value: string) =>
   );
 
 router.post("/contact", async (req, res) => {
-  const { name, email, project, message } = req.body ?? {};
+  const { name, email, project, message, website } = req.body ?? {};
+
+  if (typeof website === "string" && website.trim()) {
+    res.status(204).end();
+    return;
+  }
+
+  const clientKey = req.ip || "unknown";
+  const now = Date.now();
+  const attempt = contactAttempts.get(clientKey);
+  if (!attempt || attempt.resetAt <= now) {
+    contactAttempts.set(clientKey, {
+      count: 1,
+      resetAt: now + contactWindowMs,
+    });
+  } else if (attempt.count >= maxContactAttempts) {
+    res.setHeader("Retry-After", Math.ceil((attempt.resetAt - now) / 1000));
+    res.status(429).json({ error: "Too many messages. Please try again later." });
+    return;
+  } else {
+    attempt.count += 1;
+  }
 
   if (
     typeof name !== "string" ||
@@ -28,7 +52,12 @@ router.post("/contact", async (req, res) => {
     !name.trim() ||
     !email.trim() ||
     !project.trim() ||
-    !message.trim()
+    !message.trim() ||
+    name.trim().length > 120 ||
+    email.trim().length > 240 ||
+    project.trim().length > 160 ||
+    message.trim().length > 5000 ||
+    !/^\S+@\S+\.\S+$/.test(email.trim())
   ) {
     res.status(400).json({ error: "All contact fields are required." });
     return;

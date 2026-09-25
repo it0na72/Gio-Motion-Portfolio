@@ -72,6 +72,8 @@ const translations = {
       lead: "Have a project in mind?",
       messageNoted: "Message received.",
       thanks: "Thanks for getting in touch. Gio will get back to you soon.",
+      confirmationDetails: "Your message has been sent. You can also email Gio directly below.",
+      emailDirect: "Email Gio directly",
       sendAnother: "Send another",
       name: "Name",
       namePlaceholder: "Your name",
@@ -88,6 +90,7 @@ const translations = {
     footer: {
       role: "VIDEO EDITOR / MOTION DESIGNER",
       email: "Email",
+      backToTop: "Back to top",
     },
     project: {
       notes: "Project notes",
@@ -191,6 +194,8 @@ const translations = {
       lead: "Algum projecto em mente?",
       messageNoted: "Mensagem recebida.",
       thanks: "Entrarei em contacto o mais rápido possível.",
+      confirmationDetails: "A sua mensagem foi enviada. Também pode contactar o Gio diretamente abaixo.",
+      emailDirect: "Enviar email direto ao Gio",
       sendAnother: "Enviar outra",
       name: "Nome",
       namePlaceholder: "O teu nome",
@@ -207,6 +212,7 @@ const translations = {
     footer: {
       role: "EDITOR DE VÍDEO / motion designer",
       email: "Email",
+      backToTop: "Voltar ao topo",
     },
     project: {
       notes: "Notas do projeto",
@@ -311,6 +317,8 @@ const translations = {
       lead: "",
       messageNoted: "メッセージを受け取りました。",
       thanks: "近日中にご返信いたします。",
+      confirmationDetails: "メッセージを送信しました。下のリンクから直接メールすることもできます。",
+      emailDirect: "Gioに直接メールする",
       sendAnother: "別のメッセージを送る",
       name: "お名前",
       namePlaceholder: "お名前",
@@ -327,6 +335,7 @@ const translations = {
     footer: {
       role: "映像編集 / モーションデザイン",
       email: "メール",
+      backToTop: "ページ上部へ戻る",
     },
     project: {
       notes: "プロジェクトノート",
