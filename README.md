@@ -43,13 +43,15 @@ On Windows PowerShell, set environment variables with `$env:PORT = "5174"` befor
 
 ## Run The API
 
-The API server requires both `PORT` and `DATABASE_URL`:
+The API server requires `PORT`. For local contact-form testing, copy `artifacts/api-server/.env.example` to `artifacts/api-server/.env` and replace the Resend values with valid credentials:
 
 ```bash
-$env:PORT = "5000"
-$env:DATABASE_URL = "postgresql://user:password@localhost:5432/gio_portfolio"
+cp artifacts/api-server/.env.example artifacts/api-server/.env
+export PORT=5000
 pnpm --filter @workspace/api-server run dev
 ```
+
+The API development command loads `artifacts/api-server/.env` automatically. If your shell does not support `export`, set `PORT`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `CONTACT_TO_EMAIL` in the environment before starting the API.
 
 The API is served under `/api`. The current API contract includes:
 
@@ -139,6 +141,8 @@ pnpm --filter @workspace/scripts run hello
 Build artifacts are generated inside each package. The portfolio's production files are emitted to `artifacts/gio-portfolio/dist/public`. The API bundles to `artifacts/api-server/dist` and listens on the `PORT` environment variable.
 
 For a deployment that only serves the portfolio, only the Vite client is required. The API and PostgreSQL database are needed for server-backed features such as contact form delivery.
+
+The GitHub Pages workflow reads the public API URL from the repository variable `VITE_API_URL` at build time. Set it to the deployed API URL, including `/api` (for example, `https://api.example.com/api`), and configure the API deployment with `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `CONTACT_TO_EMAIL`. `RESEND_FROM_EMAIL` must use a sender/domain accepted by Resend; `onboarding@resend.dev` is only suitable for Resend's limited test usage.
 
 ## Development Guidelines
 

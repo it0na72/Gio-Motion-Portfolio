@@ -40,6 +40,7 @@ jobs:
         env:
           PORT: 4173
           BASE_PATH: /
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - name: Make project routes work on GitHub Pages
         run: cp artifacts/gio-portfolio/dist/public/index.html artifacts/gio-portfolio/dist/public/404.html

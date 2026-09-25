@@ -9,7 +9,6 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   motion,
-  useInView,
   useMotionValue,
   useSpring,
 } from "framer-motion";
@@ -32,6 +31,61 @@ import "@/index.css";
 const queryClient = new QueryClient();
 type Filter = "ALL" | "MOTION DESIGN" | "VIDEO EDITING";
 
+function CustomCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [interactive, setInteractive] = useState(false);
+
+  useEffect(() => {
+    const pointerQuery = window.matchMedia("(pointer: coarse)");
+    if (pointerQuery.matches || !cursorRef.current) return;
+
+    const cursor = cursorRef.current;
+    document.documentElement.classList.add("has-custom-cursor");
+
+    const handleMove = (event: PointerEvent) => {
+      cursor.style.left = `${event.clientX}px`;
+      cursor.style.top = `${event.clientY}px`;
+      setVisible(true);
+      setInteractive(
+        event.target instanceof Element &&
+          Boolean(event.target.closest("a, button, [data-cursor='interactive']")),
+      );
+    };
+    const handleLeave = () => setVisible(false);
+
+    document.addEventListener("pointermove", handleMove);
+    document.documentElement.addEventListener("mouseleave", handleLeave);
+    return () => {
+      document.removeEventListener("pointermove", handleMove);
+      document.documentElement.removeEventListener("mouseleave", handleLeave);
+      document.documentElement.classList.remove("has-custom-cursor");
+    };
+  }, []);
+
+  return (
+    <div
+      ref={cursorRef}
+      className={`site-cursor ${visible ? "is-visible" : ""} ${interactive ? "is-interactive" : ""}`}
+      aria-hidden="true"
+    >
+      <svg
+        className="site-cursor-pointer"
+        viewBox="0 0 18 22"
+        aria-hidden="true"
+      >
+        <path
+          d="M2 1.5v18l4.7-4.4 3.2 5.5 2.2-1.3-3.2-5.5h6.1L2 1.5Z"
+          fill="currentColor"
+          stroke="hsl(var(--background))"
+          strokeWidth="1.1"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
 function Reveal({
   children,
   className = "",
@@ -41,17 +95,15 @@ function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.08 });
   return (
     <motion.div
-      ref={ref}
       className={className}
       initial={{ opacity: 0, y: 18 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
       transition={{
         duration: 0.8,
-        delay: delay * 0.08,
+        delay: delay * 0.16,
         ease: [0.22, 1, 0.36, 1],
       }}
     >
@@ -65,7 +117,6 @@ function Header() {
   const [location] = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const links = [
-    { href: "/work", label: t.nav.work, testId: "work" },
     { href: "/about", label: t.nav.about, testId: "about" },
     { href: "/contact", label: t.nav.contact, testId: "contact" },
   ];
@@ -168,11 +219,25 @@ function Footer() {
 
 function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const [atPageEnd, setAtPageEnd] = useState(false);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
+  useEffect(() => {
+    const updatePageEnd = () => {
+      const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      setAtPageEnd(remaining <= 24);
+    };
+    updatePageEnd();
+    window.addEventListener("scroll", updatePageEnd, { passive: true });
+    window.addEventListener("resize", updatePageEnd);
+    return () => {
+      window.removeEventListener("scroll", updatePageEnd);
+      window.removeEventListener("resize", updatePageEnd);
+    };
+  }, []);
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${atPageEnd ? "is-at-page-end" : ""}`}>
       <Header />
       <main>{children}</main>
       <Footer />
@@ -208,6 +273,8 @@ function MediaVisual({
   showVideo?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaFrameRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
@@ -241,16 +308,20 @@ function MediaVisual({
     setIsMuted(nextMutedState);
   };
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !project.videoUrl) return;
+    const frame = mediaFrameRef.current;
+    if (!frame || !project.videoUrl) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) void video.play();
-        else video.pause();
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+          setShouldLoad(true);
+          if (videoRef.current) void videoRef.current.play();
+        } else if (videoRef.current) {
+          videoRef.current.pause();
+        }
       },
-      { threshold: 0.2 },
+      { threshold: [0, 0.35], rootMargin: "0px 0px -10% 0px" },
     );
-    observer.observe(video);
+    observer.observe(frame);
     return () => observer.disconnect();
   }, [project.videoUrl]);
   useEffect(() => {
@@ -267,6 +338,7 @@ function MediaVisual({
   }, []);
   return (
     <motion.div
+      ref={mediaFrameRef}
       className={`media-frame ${project.aspectRatio === "9/16" ? "is-vertical" : ""}`}
       style={{ aspectRatio: project.aspectRatio }}
       data-testid={`media-${project.slug}`}
@@ -278,7 +350,7 @@ function MediaVisual({
       onMouseEnter={() => mediaScale.set(1.06)}
       onMouseLeave={resetMediaMotion}
     >
-      {project.videoUrl ? (
+      {project.videoUrl && shouldLoad ? (
         <motion.video
           ref={videoRef}
           className="media-content"
@@ -288,9 +360,16 @@ function MediaVisual({
           muted={isMuted}
           loop
           playsInline
-          preload="metadata"
+          preload="none"
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
+        />
+      ) : project.videoUrl && project.thumbnail ? (
+        <motion.img
+          className="media-content video-poster"
+          src={project.thumbnail}
+          alt={`${project.title} ${t.project.thumbnail}`}
+          loading="lazy"
         />
       ) : project.thumbnail ? (
         <motion.img
@@ -303,7 +382,7 @@ function MediaVisual({
       ) : (
         <PlaceholderVisual project={project} />
       )}
-      {showVideo && project.videoUrl && (
+      {showVideo && project.videoUrl && shouldLoad && (
         <>
           <span className="play-indicator" aria-hidden="true">
             <Play size={11} fill="currentColor" strokeWidth={1.2} />
@@ -341,7 +420,7 @@ function ProjectCard({
     project.category === "MOTION DESIGN" ? t.filters.motion : t.filters.editing;
   return (
     <Reveal
-      delay={(index % 3) + 1}
+      delay={index}
       className={`project-card-wrap ${project.aspectRatio === "9/16" ? "card-vertical" : ""}`}
     >
       <div
@@ -410,14 +489,17 @@ function FilterBar({
   );
 }
 
-function WorkGrid({ filter }: { filter: Filter }) {
+function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
   const visibleProjects =
     filter === "ALL"
       ? projects
       : projects.filter((project) => project.category === filter);
+  const displayedProjects = limit
+    ? visibleProjects.slice(0, limit)
+    : visibleProjects;
   return (
     <div className="work-grid">
-      {visibleProjects.map((project, index) => (
+      {displayedProjects.map((project, index) => (
         <div
           key={project.slug}
           className={`grid-position grid-position-${index % 5}`}
@@ -481,28 +563,6 @@ function Home() {
       </section>
       <ContactBand />
     </>
-  );
-}
-
-function Work() {
-  const [filter, setFilter] = useState<Filter>("ALL");
-  const { t } = useLanguage();
-  return (
-    <section className="page-section work-page" data-testid="page-work">
-      <div className="page-width">
-        <Reveal>
-          <Eyebrow>{t.work.archiveEyebrow}</Eyebrow>
-          <h1 className="page-title">{t.work.title}</h1>
-        </Reveal>
-        <div className="work-toolbar">
-          <FilterBar filter={filter} setFilter={setFilter} />
-          <span className="work-count">
-            {projects.length} {t.work.countSuffix}
-          </span>
-        </div>
-        <WorkGrid filter={filter} />
-      </div>
-    </section>
   );
 }
 
@@ -640,17 +700,17 @@ function Contact() {
                   setSubmitting(true);
                   setError(false);
                   const form = event.currentTarget;
+                  const apiBaseUrl =
+                    import.meta.env.VITE_API_URL ||
+                    "/api";
                   try {
-                    const response = await fetch(
-                      `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/contact`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(
-                          Object.fromEntries(new FormData(form)),
-                        ),
-                      },
-                    );
+                    const response = await fetch(`${apiBaseUrl}/contact`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(
+                        Object.fromEntries(new FormData(form)),
+                      ),
+                    });
                     if (response.ok) {
                       setSent(true);
                     } else {
@@ -727,7 +787,6 @@ function Router() {
       <ErrorBoundary>
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/work" component={Work} />
           <Route path="/about" component={About} />
           <Route path="/contact" component={Contact} />
           <Route component={NotFound} />
@@ -740,6 +799,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <CustomCursor />
       <TooltipProvider>
         <LanguageProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
