@@ -393,10 +393,25 @@ function isLanguage(value: string | null): value is Language {
   return value === "en" || value === "pt" || value === "jp";
 }
 
+function getBrowserLanguage(): Language {
+  const browserLanguages = window.navigator.languages?.length
+    ? window.navigator.languages
+    : [window.navigator.language];
+
+  for (const browserLanguage of browserLanguages) {
+    const language = browserLanguage.toLowerCase().split("-")[0];
+    if (language === "pt") return "pt";
+    if (language === "ja") return "jp";
+    if (language === "en") return "en";
+  }
+
+  return "en";
+}
+
 function getInitialLanguage(): Language {
   if (typeof window === "undefined") return "en";
   const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  return isLanguage(savedLanguage) ? savedLanguage : "en";
+  return isLanguage(savedLanguage) ? savedLanguage : getBrowserLanguage();
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
