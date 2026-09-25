@@ -31,7 +31,7 @@ HOMEPAGE STRUCTURE
 
 1. Minimal navigation
 
-Gio Oliveira
+Gio
 
 Work
 About
@@ -41,7 +41,7 @@ Contact
 
 Instead of "Gio edits time.", use:
 
-Gio Oliveira
+Gio
 
 Video editor / Motion designer
 
