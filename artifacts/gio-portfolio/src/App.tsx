@@ -3,11 +3,17 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { motion, useInView } from "framer-motion";
-import { ArrowUpRight, Mail, Menu, Play, X } from "lucide-react";
+import {
+  motion,
+  useInView,
+  useMotionValue,
+  useSpring,
+} from "framer-motion";
+import { ArrowUpRight, Mail, Menu, Play, Volume2, VolumeX, X } from "lucide-react";
 import {
   Link,
   Route,
@@ -202,7 +208,38 @@ function MediaVisual({
   showVideo?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const parallaxX = useMotionValue(0);
+  const parallaxY = useMotionValue(0);
+  const mediaScale = useMotionValue(1);
+  const smoothX = useSpring(parallaxX, { stiffness: 180, damping: 24, mass: 0.45 });
+  const smoothY = useSpring(parallaxY, { stiffness: 180, damping: 24, mass: 0.45 });
+  const smoothScale = useSpring(mediaScale, { stiffness: 180, damping: 24, mass: 0.45 });
   const { t } = useLanguage();
+  const handleMediaMove = (event: MouseEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    parallaxX.set(x * -20);
+    parallaxY.set(y * -20);
+  };
+  const resetMediaMotion = () => {
+    parallaxX.set(0);
+    parallaxY.set(0);
+    mediaScale.set(1);
+  };
+  const toggleAudio = () => {
+    const video = videoRef.current;
+    const nextMutedState = !isMuted;
+    if (video && !nextMutedState) {
+      window.dispatchEvent(
+        new CustomEvent<HTMLVideoElement>("portfolio:video-audio", {
+          detail: video,
+        }),
+      );
+    }
+    setIsMuted(nextMutedState);
+  };
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !project.videoUrl) return;
@@ -216,6 +253,18 @@ function MediaVisual({
     observer.observe(video);
     return () => observer.disconnect();
   }, [project.videoUrl]);
+  useEffect(() => {
+    const handleOtherVideoAudio = (event: Event) => {
+      const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
+      if (activeVideo !== videoRef.current) {
+        if (videoRef.current) videoRef.current.muted = true;
+        setIsMuted(true);
+      }
+    };
+    window.addEventListener("portfolio:video-audio", handleOtherVideoAudio);
+    return () =>
+      window.removeEventListener("portfolio:video-audio", handleOtherVideoAudio);
+  }, []);
   return (
     <motion.div
       className={`media-frame ${project.aspectRatio === "9/16" ? "is-vertical" : ""}`}
@@ -223,23 +272,30 @@ function MediaVisual({
       data-testid={`media-${project.slug}`}
       initial={{ opacity: 0, scale: 0.96, y: 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
+      whileHover={{ scale: 1.025, y: -8 }}
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={handleMediaMove}
+      onMouseEnter={() => mediaScale.set(1.06)}
+      onMouseLeave={resetMediaMotion}
     >
       {project.videoUrl ? (
-        <video
+        <motion.video
           ref={videoRef}
           className="media-content"
+          style={{ x: smoothX, y: smoothY, scale: smoothScale }}
           src={project.videoUrl}
           poster={project.thumbnail || undefined}
-          muted
+          muted={isMuted}
           loop
           playsInline
           preload="metadata"
+          onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
       ) : project.thumbnail ? (
-        <img
+        <motion.img
           className="media-content"
+          style={{ x: smoothX, y: smoothY, scale: smoothScale }}
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
           loading="lazy"
@@ -248,9 +304,23 @@ function MediaVisual({
         <PlaceholderVisual project={project} />
       )}
       {showVideo && project.videoUrl && (
-        <span className="play-indicator" aria-hidden="true">
-          <Play size={11} fill="currentColor" strokeWidth={1.2} />
-        </span>
+        <>
+          <span className="play-indicator" aria-hidden="true">
+            <Play size={11} fill="currentColor" strokeWidth={1.2} />
+          </span>
+          <button
+            type="button"
+            className="sound-toggle"
+            aria-label={isMuted ? "Turn sound on" : "Mute video"}
+            title={isMuted ? "Turn sound on" : "Mute video"}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleAudio();
+            }}
+          >
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
+        </>
       )}
       {project.placeholder && (
         <span className="placeholder-badge">{t.media.placeholderBadge}</span>
@@ -374,11 +444,7 @@ function Home() {
               <h1 className="hero-title">Gio</h1>
             </div>
             <Reveal delay={1}>
-              <p className="hero-role">
-                {t.hero.editor}
-                <br />
-                {t.hero.motion}
-              </p>
+              <p className="hero-role">{t.about.lead}</p>
             </Reveal>
           </div>
           <Reveal delay={2} className="hero-intro">

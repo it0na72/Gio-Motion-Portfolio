@@ -378,27 +378,33 @@ button {
 .work-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: 32px;
-  row-gap: 110px;
+  column-gap: 22px;
+  row-gap: 76px;
   align-items: start;
 }
 .grid-position-0 {
-  grid-column: 1 / span 7;
+  grid-column: 1 / span 6;
+  z-index: 2;
 }
 .grid-position-1 {
-  grid-column: 9 / span 4;
-  margin-top: 155px;
+  grid-column: 7 / span 6;
+  margin-top: 250px;
+  z-index: 1;
 }
 .grid-position-2 {
-  grid-column: 3 / span 5;
+  grid-column: 2 / span 5;
+  margin-top: 22px;
+  z-index: 3;
 }
 .grid-position-3 {
-  grid-column: 9 / span 4;
-  margin-top: -35px;
+  grid-column: 8 / span 5;
+  margin-top: 46px;
+  z-index: 2;
 }
 .grid-position-4 {
-  grid-column: 1 / span 7;
-  margin-top: 40px;
+  grid-column: 4 / span 7;
+  margin-top: 26px;
+  z-index: 4;
 }
 .project-card {
   display: block;
@@ -410,21 +416,24 @@ button {
   border-radius: 20px;
   background: hsl(var(--secondary));
   box-shadow: 0 12px 28px hsl(var(--foreground) / 0.14);
+  transform-origin: center;
 }
 .media-content {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  will-change: transform;
 }
 .media-frame .media-content {
   transition:
-    transform 1s var(--ease-editorial),
     filter 1s var(--ease-editorial);
 }
 .project-card:hover .media-frame .media-content {
-  transform: scale(1.035);
   filter: saturate(1.08);
+}
+.project-card:hover .media-frame {
+  box-shadow: 0 18px 38px hsl(var(--foreground) / 0.2);
 }
 .placeholder-visual {
   position: absolute;
@@ -505,6 +514,27 @@ button {
   border-radius: 50%;
   color: hsl(var(--background));
   opacity: 0.9;
+}
+.sound-toggle {
+  position: absolute;
+  z-index: 3;
+  right: 54px;
+  bottom: 15px;
+  display: flex;
+  width: 31px;
+  height: 31px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid hsl(var(--background) / 0.7);
+  border-radius: 50%;
+  color: hsl(var(--background));
+  background: hsl(var(--foreground) / 0.24);
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease;
+}
+.sound-toggle:hover {
+  background: hsl(var(--foreground) / 0.58);
+  transform: translateY(-2px);
 }
 .project-card-meta {
   display: flex;
