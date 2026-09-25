@@ -7,6 +7,15 @@ const contactAttempts = new Map<string, { count: number; resetAt: number }>();
 const contactWindowMs = 15 * 60 * 1000;
 const maxContactAttempts = 5;
 
+const sanitizeSingleLine = (value: string) =>
+  value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+
+const sanitizeMessage = (value: string) =>
+  value
+    .replace(/[\u0000\u000b\u000c\u000e-\u001f\u007f]/g, "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+
 const escapeHtml = (value: string) =>
   value.replace(
     /[&<>"']/g,
@@ -48,16 +57,27 @@ router.post("/contact", async (req, res) => {
     typeof name !== "string" ||
     typeof email !== "string" ||
     typeof project !== "string" ||
-    typeof message !== "string" ||
-    !name.trim() ||
-    !email.trim() ||
-    !project.trim() ||
-    !message.trim() ||
-    name.trim().length > 120 ||
-    email.trim().length > 240 ||
-    project.trim().length > 160 ||
-    message.trim().length > 5000 ||
-    !/^\S+@\S+\.\S+$/.test(email.trim())
+    typeof message !== "string"
+  ) {
+    res.status(400).json({ error: "All contact fields are required." });
+    return;
+  }
+
+  const cleanName = sanitizeSingleLine(name);
+  const cleanEmail = sanitizeSingleLine(email);
+  const cleanProject = sanitizeSingleLine(project);
+  const cleanMessage = sanitizeMessage(message);
+
+  if (
+    !cleanName ||
+    !cleanEmail ||
+    !cleanProject ||
+    !cleanMessage ||
+    cleanName.length > 120 ||
+    cleanEmail.length > 240 ||
+    cleanProject.length > 160 ||
+    cleanMessage.length > 5000 ||
+    !/^\S+@\S+\.\S+$/.test(cleanEmail)
   ) {
     res.status(400).json({ error: "All contact fields are required." });
     return;
@@ -74,21 +94,21 @@ router.post("/contact", async (req, res) => {
 
   try {
     const resend = new Resend(apiKey);
-    const safeName = escapeHtml(name.trim());
-    const safeEmail = escapeHtml(email.trim());
-    const safeProject = escapeHtml(project.trim());
-    const safeMessage = escapeHtml(message.trim()).replace(/\n/g, "<br />");
+    const safeName = escapeHtml(cleanName);
+    const safeEmail = escapeHtml(cleanEmail);
+    const safeProject = escapeHtml(cleanProject);
+    const safeMessage = escapeHtml(cleanMessage).replace(/\n/g, "<br />");
     const { error } = await resend.emails.send({
       from,
       to,
-      replyTo: email.trim(),
-      subject: `Portfolio enquiry: ${project.trim()}`,
+      replyTo: cleanEmail,
+      subject: `Portfolio enquiry: ${cleanProject}`,
       text: [
-        `Name: ${name.trim()}`,
-        `Email: ${email.trim()}`,
-        `Project: ${project.trim()}`,
+        `Name: ${cleanName}`,
+        `Email: ${cleanEmail}`,
+        `Project: ${cleanProject}`,
         "",
-        message.trim(),
+        cleanMessage,
       ].join("\n"),
       html: `
         <div style="margin:0;background:#f1eee4;color:#292623;font-family:Arial,sans-serif;padding:32px 16px;">

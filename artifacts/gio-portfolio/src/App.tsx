@@ -32,6 +32,10 @@ import "@/index.css";
 const queryClient = new QueryClient();
 type Filter = "ALL" | "MOTION DESIGN" | "VIDEO EDITING";
 
+function requestVideoPlayback(video: HTMLVideoElement) {
+  void video.play().catch(() => undefined);
+}
+
 function PageTransition({ active }: { active: boolean }) {
   return <div className={`page-transition ${active ? "is-active" : ""}`} aria-hidden="true" />;
 }
@@ -362,7 +366,7 @@ function MediaVisual({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaFrameRef = useRef<HTMLDivElement>(null);
-  const [shouldLoad, setShouldLoad] = useState(priority);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
@@ -415,19 +419,22 @@ function MediaVisual({
       ([entry]) => {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
           setShouldLoad(true);
-          if (videoRef.current) void videoRef.current.play();
-        } else if (videoRef.current) {
-          videoRef.current.pause();
+        } else {
+          videoRef.current?.pause();
         }
       },
-      { threshold: [0, 0.35], rootMargin: "0px 0px -10% 0px" },
+      {
+        threshold: [0, 0.35],
+        rootMargin: priority ? "300px 0px" : "0px 0px -10% 0px",
+      },
     );
     observer.observe(frame);
     return () => observer.disconnect();
   }, [project.videoUrl]);
   useEffect(() => {
-    if (shouldLoad && !prefersReducedMotion && videoRef.current) {
-      void videoRef.current.play();
+    const video = videoRef.current;
+    if (shouldLoad && !prefersReducedMotion && video) {
+      requestVideoPlayback(video);
     }
   }, [prefersReducedMotion, shouldLoad]);
   useEffect(() => {
@@ -474,7 +481,7 @@ function MediaVisual({
           autoPlay={!prefersReducedMotion}
           loop
           playsInline
-          preload={priority ? "auto" : "none"}
+          preload={priority ? "metadata" : "none"}
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
@@ -484,6 +491,7 @@ function MediaVisual({
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
           loading="lazy"
+          decoding="async"
         />
       ) : project.thumbnail ? (
         <motion.img
@@ -492,6 +500,7 @@ function MediaVisual({
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
           loading="lazy"
+          decoding="async"
         />
       ) : (
         <PlaceholderVisual project={project} />
@@ -639,9 +648,6 @@ function Home() {
             <div className="clip-reveal">
               <h1 className="hero-title">Gio</h1>
             </div>
-            <Reveal delay={1}>
-              <p className="hero-role">{t.about.lead}</p>
-            </Reveal>
           </div>
           <Reveal delay={2} className="hero-intro">
             <p>{t.hero.description}</p>
@@ -700,6 +706,8 @@ function About() {
               className="about-photo"
               src={`${import.meta.env.BASE_URL}media/gioHomepagePic.png`}
               alt={t.about.photoAlt}
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div>
@@ -794,7 +802,12 @@ function Contact() {
           </div>
           <div>
             {sent ? (
-              <div className="sent-message" data-testid="status-contact-sent">
+              <div
+                className="sent-message"
+                role="status"
+                aria-live="polite"
+                data-testid="status-contact-sent"
+              >
                 <p>{t.contact.messageNoted}</p>
                 <span>{t.contact.thanks}</span>
                 <span>{t.contact.confirmationDetails}</span>
@@ -897,7 +910,11 @@ function Contact() {
                   {submitting ? t.contact.sending : t.contact.sendMessage}{" "}
                   <ArrowUpRight size={15} strokeWidth={1.3} />
                 </button>
-                {error && <p className="form-error">{t.contact.error}</p>}
+                {error && (
+                  <p className="form-error" role="alert">
+                    {t.contact.error}
+                  </p>
+                )}
               </form>
             )}
           </div>

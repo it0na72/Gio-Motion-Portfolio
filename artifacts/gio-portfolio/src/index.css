@@ -139,6 +139,7 @@ button {
   z-index: 31;
   inset: 0;
   pointer-events: none;
+  background: transparent;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   mask-image: radial-gradient(
@@ -187,8 +188,6 @@ button {
     hsl(var(--primary) / 0.2) 46%,
     hsl(var(--background) / 0.44) 100%
   );
-  backdrop-filter: blur(12px) saturate(1.08);
-  -webkit-backdrop-filter: blur(12px) saturate(1.08);
   clip-path: inset(0 100% 0 0);
 }
 .page-transition::before {
@@ -201,9 +200,8 @@ button {
     hsl(0 0% 100% / 0.34) 48%,
     transparent 66%
   );
-  filter: blur(18px);
   transform: translateX(-35%) scaleX(1.16);
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
 }
 .page-transition.is-active {
   visibility: visible;
@@ -525,7 +523,6 @@ button {
   box-shadow: 0 12px 28px hsl(var(--foreground) / 0.14);
   transform-origin: center;
   transform-style: preserve-3d;
-  will-change: transform;
 }
 .media-frame::before,
 .media-frame::after {
@@ -560,7 +557,6 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  will-change: transform;
 }
 .media-frame .media-content {
   transition:
@@ -913,7 +909,8 @@ button {
   display: flex;
   flex-direction: column;
   align-items: start;
-  padding-top: 24px;
+  gap: 18px;
+  padding: 32px 0 24px;
   border-top: 1px solid hsl(var(--foreground) / 0.22);
 }
 .sent-message p {
@@ -924,9 +921,13 @@ button {
 }
 .sent-message span {
   max-width: 340px;
-  margin-top: 18px;
+  margin: 0;
   color: hsl(var(--foreground) / 0.65);
   font-size: 14px;
+  line-height: 1.5;
+}
+.sent-message .text-link {
+  margin-top: 4px;
 }
 
 .project-intro {
@@ -1165,7 +1166,7 @@ button {
 .language-button,
 .footer-links,
 .social-links a {
-  color: hsl(var(--foreground) / 0.55);
+  color: hsl(var(--foreground) / 0.72);
 }
 .nav-link.is-current,
 .nav-link:hover,
@@ -1198,15 +1199,15 @@ button {
   line-height: 0.95;
 }
 .eyebrow {
-  color: hsl(var(--foreground) / 0.5);
+  color: hsl(var(--foreground) / 0.72);
 }
 .hero-role,
 .hero-location {
   font-family: var(--app-font-mono);
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: hsl(var(--foreground) / 0.54);
+  text-transform: uppercase;
+  color: hsl(var(--foreground) / 0.72);
 }
 .hero-intro,
 .selected-work-section,
@@ -1220,8 +1221,7 @@ button {
 }
 .filter-button {
   padding: 0 0 5px;
-  border-radius: 0;
-  color: hsl(var(--foreground) / 0.55);
+  color: hsl(var(--foreground) / 0.72);
   transition:
     color 220ms var(--ease-apple),
     background-color 220ms var(--ease-apple),
@@ -1318,7 +1318,7 @@ button {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: hsl(var(--foreground) / 0.48);
+  color: hsl(var(--foreground) / 0.68);
 }
 .contact-form input,
 .contact-form textarea {
@@ -1346,15 +1346,13 @@ button {
 .site-shell.is-scrolled .site-header {
   padding: 14px 0;
   background: hsl(var(--background) / 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: hsl(var(--background));
   transition:
     padding 380ms var(--ease-editorial),
     background-color 380ms ease;
 }
 .magnetic-link-wrap {
   display: inline-flex;
-  will-change: transform;
 }
 
 @media (max-width: 767px) {
@@ -1579,8 +1577,7 @@ button {
     transform: none;
   }
   .site-shell::before {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    display: none;
   }
   .page-transition {
     display: none;
