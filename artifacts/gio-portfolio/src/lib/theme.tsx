@@ -21,12 +21,9 @@ function isTheme(value: string | null): value is Theme {
 }
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (isTheme(savedTheme)) return savedTheme;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return isTheme(savedTheme) ? savedTheme : "dark";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
