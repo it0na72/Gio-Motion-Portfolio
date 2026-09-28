@@ -21,7 +21,7 @@ export const languageOptions: {
 
 const translations = {
   en: {
-    nav: { work: "Work", about: "About", contact: "Contact" },
+    nav: { work: "Work", about: "About", contact: "Contact", home: "Home" },
     navigation: {
       primary: "Primary navigation",
       mobile: "Mobile navigation",
@@ -30,6 +30,8 @@ const translations = {
       open: "Open navigation",
       close: "Close navigation",
       language: "Language",
+      lightMode: "Switch to light mode",
+      darkMode: "Switch to dark mode",
     },
     hero: {
       eyebrow: "Independent editor / motion designer",
@@ -140,7 +142,7 @@ const translations = {
     },
   },
   pt: {
-    nav: { work: "Vídeos", about: "Sobre", contact: "Contacto" },
+    nav: { work: "Vídeos", about: "Sobre", contact: "Contacto", home: "Início" },
     navigation: {
       primary: "Navegação principal",
       mobile: "Navegação móvel",
@@ -149,11 +151,13 @@ const translations = {
       open: "Abrir navegação",
       close: "Fechar navegação",
       language: "Idioma",
+      lightMode: "Mudar para modo claro",
+      darkMode: "Mudar para modo escuro",
     },
     hero: {
-      eyebrow: "Editor independente / designer de motion",
+      eyebrow: "Editor independente / motion designer",
       editor: "Editor de vídeo",
-      motion: "Designer de motion",
+      motion: "Motion designer",
       description: "A editar vídeos, e a transformar ideias em movimento.",
       based: "Baseado no Japão",
       availability: "Disponível mundialmente",
@@ -178,7 +182,7 @@ const translations = {
       titleFirst: "Movimento com",
       titleSecond: "intenção.",
       lead: "Editor de vídeo e motion designer baseado no Japão.",
-      copy: "Crio filmes e motion design para empresas, com foco no ritmo, clareza e no detalhe.",
+      copy: "Crio filmes e motion design para empresas e criadores de conteúdo, com foco no ritmo, clareza e no detalhe.",
       photoAlt: "Gio",
       focus: "Áreas",
       videoEditing: "Edição de vídeo",
@@ -262,7 +266,7 @@ const translations = {
     },
   },
   jp: {
-    nav: { work: "制作実績", about: "プロフィール", contact: "お問い合わせ" },
+    nav: { work: "制作実績", about: "プロフィール", contact: "お問い合わせ", home: "ホーム" },
     navigation: {
       primary: "メインナビゲーション",
       mobile: "モバイルナビゲーション",
@@ -271,6 +275,8 @@ const translations = {
       open: "ナビゲーションを開く",
       close: "ナビゲーションを閉じる",
       language: "言語",
+      lightMode: "ライトモードに切り替える",
+      darkMode: "ダークモードに切り替える",
     },
     hero: {
       eyebrow: "独立系ビデオエディター / モーションデザイナー",
@@ -301,7 +307,7 @@ const translations = {
       titleFirst: "意図を持って",
       titleSecond: "動かす。",
       lead: "日本を拠点に活動するビデオエディター／モーションデザイナー。",
-      copy: "カットを起点に、リズムと明快さを大切にしながら、映像とモーションを設計しております。細部まで意図を持って組み立て、見る人に自然と届く表現を追求しております。",
+      copy: "カットを軸に、リズムと伝わりやすさを大切にしながら、映像編集とモーションデザインを手がけています。細部まで意図を込め、見る人に自然と伝わる表現を目指しています。",
       photoAlt: "Gio",
       focus: "分野",
       videoEditing: "映像編集",
@@ -311,7 +317,7 @@ const translations = {
       bandEyebrow: "プロジェクトのご相談ですか？",
       bandTitleFirst: "何かを",
       bandTitleSecond: "動かしましょう。",
-      startConversation: "相談を始める",
+      startConversation: "相談はこちら",
       eyebrow: "お問い合わせ / こんにちは",
       title: "お気軽にご相談ください。",
       lead: "",

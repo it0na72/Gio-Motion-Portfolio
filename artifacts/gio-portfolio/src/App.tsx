@@ -2,6 +2,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type CSSProperties,
   type MouseEvent,
   type ReactNode,
@@ -13,7 +14,7 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { ArrowUp, ArrowUpRight, Mail, Menu, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowUpRight, Mail, Menu, Moon, Play, Sun, Volume2, VolumeX, X } from "lucide-react";
 import {
   Link,
   Route,
@@ -27,13 +28,64 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { projects, type Project } from "@/data/projects";
 import { languageOptions, LanguageProvider, useLanguage } from "@/lib/i18n";
+import { ThemeProvider, useTheme } from "@/lib/theme";
 import "@/index.css";
 
 const queryClient = new QueryClient();
 type Filter = "ALL" | "MOTION DESIGN" | "VIDEO EDITING";
 
+const VOLUME_STORAGE_KEY = "gio-portfolio-volume";
+const DEFAULT_VOLUME = 0.3;
+
+function getStoredVolume() {
+  if (typeof window === "undefined") return DEFAULT_VOLUME;
+  const saved = Number.parseFloat(
+    window.localStorage.getItem(VOLUME_STORAGE_KEY) ?? "",
+  );
+  return Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : DEFAULT_VOLUME;
+}
+
+// keeps only a handful of videos decoding at once so weaker devices don't choke
+const MAX_CONCURRENT_VIDEOS = 4;
+const activeVideos: HTMLVideoElement[] = [];
+const waitingVideos: HTMLVideoElement[] = [];
+
 function requestVideoPlayback(video: HTMLVideoElement) {
+  if (activeVideos.includes(video)) {
+    // already active, just bump it to most-recently-used
+    activeVideos.splice(activeVideos.indexOf(video), 1);
+    activeVideos.push(video);
+    void video.play().catch(() => undefined);
+    return;
+  }
+  const waitingIndex = waitingVideos.indexOf(video);
+  if (waitingIndex !== -1) waitingVideos.splice(waitingIndex, 1);
+  if (activeVideos.length >= MAX_CONCURRENT_VIDEOS) {
+    // don't pause a video that's still on screen with nothing to wake it back up later,
+    // just queue it so it plays as soon as a slot frees
+    waitingVideos.push(video);
+    return;
+  }
+  activeVideos.push(video);
   void video.play().catch(() => undefined);
+}
+
+function releaseVideoPlayback(video: HTMLVideoElement) {
+  const activeIndex = activeVideos.indexOf(video);
+  if (activeIndex !== -1) activeVideos.splice(activeIndex, 1);
+  const waitingIndex = waitingVideos.indexOf(video);
+  if (waitingIndex !== -1) waitingVideos.splice(waitingIndex, 1);
+  video.pause();
+  const next = waitingVideos.shift();
+  if (next) {
+    activeVideos.push(next);
+    void next.play().catch(() => undefined);
+  }
+}
+
+function isVerticalAspectRatio(aspectRatio: string) {
+  const [width, height] = aspectRatio.split("/").map(Number);
+  return Boolean(width) && Boolean(height) && width < height;
 }
 
 function PageTransition({ active }: { active: boolean }) {
@@ -125,6 +177,7 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const links = [
     { href: "/about", label: t.nav.about, testId: "about" },
     { href: "/contact", label: t.nav.contact, testId: "contact" },
@@ -133,7 +186,8 @@ function Header() {
     <header className="site-header" data-testid="site-header">
       <div className="header-inner">
         <Link href="/" className="wordmark" data-testid="link-home">
-          Gio
+          <ArrowLeft size={14} strokeWidth={1.8} aria-hidden="true" />
+          {t.nav.home}
         </Link>
         <div className="header-actions">
           <nav className="desktop-nav" aria-label={t.navigation.primary}>
@@ -166,6 +220,19 @@ function Header() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? t.navigation.lightMode : t.navigation.darkMode}
+            data-testid="button-theme-toggle"
+          >
+            {theme === "dark" ? (
+              <Sun size={16} strokeWidth={1.4} />
+            ) : (
+              <Moon size={16} strokeWidth={1.4} />
+            )}
+          </button>
           <button
             type="button"
             className="menu-toggle"
@@ -358,16 +425,15 @@ function PlaceholderVisual({ project }: { project: Project }) {
 function MediaVisual({
   project,
   showVideo = false,
-  priority = false,
 }: {
   project: Project;
   showVideo?: boolean;
-  priority?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaFrameRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(getStoredVolume);
   const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
@@ -412,31 +478,49 @@ function MediaVisual({
     }
     setIsMuted(nextMutedState);
   };
+  const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextVolume = Number(event.target.value);
+    setVolume(nextVolume);
+    window.localStorage.setItem(VOLUME_STORAGE_KEY, String(nextVolume));
+    window.dispatchEvent(
+      new CustomEvent<number>("portfolio:video-volume", { detail: nextVolume }),
+    );
+  };
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
-    const observer = new IntersectionObserver(
+    // mounts the <video> tag well ahead of the viewport so it has time to buffer
+    const mountObserver = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
-          setShouldLoad(true);
-        } else {
-          videoRef.current?.pause();
-        }
+        if (entry.isIntersecting) setShouldLoad(true);
       },
-      {
-        threshold: [0, 0.35],
-        rootMargin: priority ? "300px 0px" : "0px 0px -10% 0px",
-      },
+      { threshold: 0, rootMargin: "900px 0px" },
     );
-    observer.observe(frame);
-    return () => observer.disconnect();
+    mountObserver.observe(frame);
+    return () => mountObserver.disconnect();
   }, [project.videoUrl]);
   useEffect(() => {
-    const video = videoRef.current;
-    if (shouldLoad && !prefersReducedMotion && video) {
-      requestVideoPlayback(video);
-    }
-  }, [prefersReducedMotion, shouldLoad]);
+    const frame = mediaFrameRef.current;
+    if (!frame || !project.videoUrl) return;
+    // only actually decodes/plays once the card is close to visible, keeping concurrency low
+    const playObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
+          if (!prefersReducedMotion && videoRef.current) {
+            requestVideoPlayback(videoRef.current);
+          }
+        } else if (videoRef.current) {
+          releaseVideoPlayback(videoRef.current);
+        }
+      },
+      { threshold: [0, 0.3], rootMargin: "0px 0px -10% 0px" },
+    );
+    playObserver.observe(frame);
+    return () => {
+      playObserver.disconnect();
+      if (videoRef.current) releaseVideoPlayback(videoRef.current);
+    };
+  }, [project.videoUrl, prefersReducedMotion]);
   useEffect(() => {
     const handleOtherVideoAudio = (event: Event) => {
       const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
@@ -449,10 +533,21 @@ function MediaVisual({
     return () =>
       window.removeEventListener("portfolio:video-audio", handleOtherVideoAudio);
   }, []);
+  useEffect(() => {
+    const handleVolumeSync = (event: Event) => {
+      setVolume((event as CustomEvent<number>).detail);
+    };
+    window.addEventListener("portfolio:video-volume", handleVolumeSync);
+    return () =>
+      window.removeEventListener("portfolio:video-volume", handleVolumeSync);
+  }, []);
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = volume;
+  }, [volume, shouldLoad]);
   return (
     <motion.div
       ref={mediaFrameRef}
-      className={`media-frame ${project.aspectRatio === "9/16" ? "is-vertical" : ""}`}
+      className={`media-frame ${isVerticalAspectRatio(project.aspectRatio) ? "is-vertical" : ""}`}
       style={{
         aspectRatio: project.aspectRatio,
         rotateX: smoothTiltX,
@@ -481,7 +576,7 @@ function MediaVisual({
           autoPlay={!prefersReducedMotion}
           loop
           playsInline
-          preload={priority ? "metadata" : "none"}
+          preload="auto"
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
@@ -490,7 +585,7 @@ function MediaVisual({
           className="media-content video-poster"
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
-          loading="lazy"
+          loading="eager"
           decoding="async"
         />
       ) : project.thumbnail ? (
@@ -510,6 +605,19 @@ function MediaVisual({
           <span className="play-indicator" aria-hidden="true">
             <Play size={11} fill="currentColor" strokeWidth={1.2} />
           </span>
+          {!isMuted && (
+            <input
+              type="range"
+              className="volume-slider"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              aria-label="Video volume"
+              onClick={(event) => event.stopPropagation()}
+              onChange={handleVolumeChange}
+            />
+          )}
           <button
             type="button"
             className="sound-toggle"
@@ -544,29 +652,15 @@ function ProjectCard({
   return (
     <Reveal
       delay={index}
-      className={`project-card-wrap ${project.aspectRatio === "9/16" ? "card-vertical" : ""}`}
+      className={`project-card-wrap ${isVerticalAspectRatio(project.aspectRatio) ? "card-vertical" : ""}`}
     >
       <div
         className="project-card group"
         data-testid={`card-project-${project.slug}`}
       >
-        <MediaVisual project={project} showVideo priority={index === 0} />
+        <MediaVisual project={project} showVideo />
         <div className="project-card-meta">
-          <div>
-            <motion.h3
-              className="project-title"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.7,
-                delay: (index % 5) * 0.08 + 0.18,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            >
-              {t.projectTitles[project.slug as keyof typeof t.projectTitles]}
-            </motion.h3>
-            <p className="project-kicker">{category}</p>
-          </div>
+          <p className="project-kicker">{category}</p>
         </div>
       </div>
     </Reveal>
@@ -612,6 +706,22 @@ function FilterBar({
   );
 }
 
+// interleaves landscape/portrait videos so the masonry mixes orientations across the whole width
+function buildMosaicOrder(items: Project[]) {
+  const wide = items.filter((project) => !isVerticalAspectRatio(project.aspectRatio));
+  const tall = items.filter((project) => isVerticalAspectRatio(project.aspectRatio));
+  const ordered: Project[] = [];
+  let wideIndex = 0;
+  let tallIndex = 0;
+  while (wideIndex < wide.length || tallIndex < tall.length) {
+    if (wideIndex < wide.length) ordered.push(wide[wideIndex++]);
+    for (let i = 0; i < 2 && tallIndex < tall.length; i++) {
+      ordered.push(tall[tallIndex++]);
+    }
+  }
+  return ordered;
+}
+
 function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
   const visibleProjects =
     filter === "ALL"
@@ -620,15 +730,11 @@ function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
   const displayedProjects = limit
     ? visibleProjects.slice(0, limit)
     : visibleProjects;
+  const orderedProjects = buildMosaicOrder(displayedProjects);
   return (
     <div className="work-grid">
-      {displayedProjects.map((project, index) => (
-        <div
-          key={project.slug}
-          className={`grid-position grid-position-${index % 5}`}
-        >
-          <ProjectCard project={project} index={index} />
-        </div>
+      {orderedProjects.map((project, index) => (
+        <ProjectCard key={project.slug} project={project} index={index} />
       ))}
     </div>
   );
@@ -944,11 +1050,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CustomCursor />
       <TooltipProvider>
-        <LanguageProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+          </LanguageProvider>
+        </ThemeProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
