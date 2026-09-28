@@ -376,6 +376,7 @@ button {
   justify-content: center;
   background: transparent;
   border: 1px solid hsl(var(--foreground) / 0.7);
+  border-radius: 10px;
 }
 .theme-toggle {
   display: flex;
@@ -1333,13 +1334,13 @@ button {
   background: hsl(var(--primary-foreground));
   transform: translateY(-2px);
 }
-.form-submit,
-.menu-toggle {
+.form-submit {
   border-radius: 0;
 }
 .menu-toggle,
 .theme-toggle {
   border: 1px solid hsl(var(--foreground) / 0.7);
+  border-radius: 10px;
   color: hsl(var(--foreground));
   background: transparent;
 }

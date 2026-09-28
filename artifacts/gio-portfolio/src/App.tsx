@@ -807,7 +807,6 @@ function About() {
         </Reveal>
         <div className="about-grid">
           <div className="about-index">
-            <span>01</span>
             <img
               className="about-photo"
               src={`${import.meta.env.BASE_URL}media/gioHomepagePic.png`}
