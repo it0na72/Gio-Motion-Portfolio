@@ -14,7 +14,19 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { ArrowLeft, ArrowUp, ArrowUpRight, Mail, Menu, Moon, Play, Sun, Volume2, VolumeX, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUp,
+  ArrowUpRight,
+  Mail,
+  Menu,
+  Moon,
+  Play,
+  Sun,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
 import {
   Link,
   Route,
@@ -42,7 +54,9 @@ function getStoredVolume() {
   const saved = Number.parseFloat(
     window.localStorage.getItem(VOLUME_STORAGE_KEY) ?? "",
   );
-  return Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : DEFAULT_VOLUME;
+  return Number.isFinite(saved)
+    ? Math.min(1, Math.max(0, saved))
+    : DEFAULT_VOLUME;
 }
 
 // keeps only a handful of videos decoding at once so weaker devices don't choke
@@ -89,7 +103,12 @@ function isVerticalAspectRatio(aspectRatio: string) {
 }
 
 function PageTransition({ active }: { active: boolean }) {
-  return <div className={`page-transition ${active ? "is-active" : ""}`} aria-hidden="true" />;
+  return (
+    <div
+      className={`page-transition ${active ? "is-active" : ""}`}
+      aria-hidden="true"
+    />
+  );
 }
 
 function CustomCursor() {
@@ -110,7 +129,9 @@ function CustomCursor() {
       setVisible(true);
       setInteractive(
         event.target instanceof Element &&
-          Boolean(event.target.closest("a, button, [data-cursor='interactive']")),
+          Boolean(
+            event.target.closest("a, button, [data-cursor='interactive']"),
+          ),
       );
     };
     const handleLeave = () => setVisible(false);
@@ -224,7 +245,9 @@ function Header() {
             type="button"
             className="theme-toggle"
             onClick={toggleTheme}
-            aria-label={theme === "dark" ? t.navigation.lightMode : t.navigation.darkMode}
+            aria-label={
+              theme === "dark" ? t.navigation.lightMode : t.navigation.darkMode
+            }
             data-testid="button-theme-toggle"
           >
             {theme === "dark" ? (
@@ -312,12 +335,25 @@ function Layout({ children }: { children: ReactNode }) {
   }, [location]);
   useEffect(() => {
     const handleNavigation = (event: globalThis.MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
       if (!(event.target instanceof Element)) return;
       const link = event.target.closest<HTMLAnchorElement>("a[href]");
-      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      if (!link || link.target === "_blank" || link.hasAttribute("download"))
+        return;
       const url = new URL(link.href, window.location.href);
-      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      if (
+        url.origin !== window.location.origin ||
+        url.pathname === window.location.pathname
+      )
+        return;
       event.preventDefault();
       const nextLocation = `${url.pathname}${url.search}${url.hash}`;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -326,18 +362,28 @@ function Layout({ children }: { children: ReactNode }) {
       }
       setIsTransitioning(true);
       const changeRoute = window.setTimeout(() => navigate(nextLocation), 430);
-      const finishTransition = window.setTimeout(() => setIsTransitioning(false), 900);
-      window.addEventListener("beforeunload", () => {
-        window.clearTimeout(changeRoute);
-        window.clearTimeout(finishTransition);
-      }, { once: true });
+      const finishTransition = window.setTimeout(
+        () => setIsTransitioning(false),
+        900,
+      );
+      window.addEventListener(
+        "beforeunload",
+        () => {
+          window.clearTimeout(changeRoute);
+          window.clearTimeout(finishTransition);
+        },
+        { once: true },
+      );
     };
     document.addEventListener("click", handleNavigation, true);
     return () => document.removeEventListener("click", handleNavigation, true);
   }, [location, navigate]);
   useEffect(() => {
     const updatePageEnd = () => {
-      const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      const remaining =
+        document.documentElement.scrollHeight -
+        window.innerHeight -
+        window.scrollY;
       setAtPageEnd(remaining <= 24);
       setIsScrolled(window.scrollY > 24);
     };
@@ -440,11 +486,31 @@ function MediaVisual({
   const mediaScale = useMotionValue(1);
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
-  const smoothX = useSpring(parallaxX, { stiffness: 180, damping: 24, mass: 0.45 });
-  const smoothY = useSpring(parallaxY, { stiffness: 180, damping: 24, mass: 0.45 });
-  const smoothScale = useSpring(mediaScale, { stiffness: 180, damping: 24, mass: 0.45 });
-  const smoothTiltX = useSpring(tiltX, { stiffness: 180, damping: 24, mass: 0.45 });
-  const smoothTiltY = useSpring(tiltY, { stiffness: 180, damping: 24, mass: 0.45 });
+  const smoothX = useSpring(parallaxX, {
+    stiffness: 180,
+    damping: 24,
+    mass: 0.45,
+  });
+  const smoothY = useSpring(parallaxY, {
+    stiffness: 180,
+    damping: 24,
+    mass: 0.45,
+  });
+  const smoothScale = useSpring(mediaScale, {
+    stiffness: 180,
+    damping: 24,
+    mass: 0.45,
+  });
+  const smoothTiltX = useSpring(tiltX, {
+    stiffness: 180,
+    damping: 24,
+    mass: 0.45,
+  });
+  const smoothTiltY = useSpring(tiltY, {
+    stiffness: 180,
+    damping: 24,
+    mass: 0.45,
+  });
   const { t } = useLanguage();
   const handleMediaMove = (event: MouseEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -531,7 +597,10 @@ function MediaVisual({
     };
     window.addEventListener("portfolio:video-audio", handleOtherVideoAudio);
     return () =>
-      window.removeEventListener("portfolio:video-audio", handleOtherVideoAudio);
+      window.removeEventListener(
+        "portfolio:video-audio",
+        handleOtherVideoAudio,
+      );
   }, []);
   useEffect(() => {
     const handleVolumeSync = (event: Event) => {
@@ -708,8 +777,12 @@ function FilterBar({
 
 // interleaves landscape/portrait videos so the masonry mixes orientations across the whole width
 function buildMosaicOrder(items: Project[]) {
-  const wide = items.filter((project) => !isVerticalAspectRatio(project.aspectRatio));
-  const tall = items.filter((project) => isVerticalAspectRatio(project.aspectRatio));
+  const wide = items.filter(
+    (project) => !isVerticalAspectRatio(project.aspectRatio),
+  );
+  const tall = items.filter((project) =>
+    isVerticalAspectRatio(project.aspectRatio),
+  );
   const ordered: Project[] = [];
   let wideIndex = 0;
   let tallIndex = 0;
@@ -936,9 +1009,7 @@ function Contact() {
                   setSubmitting(true);
                   setError(false);
                   const form = event.currentTarget;
-                  const apiBaseUrl =
-                    import.meta.env.VITE_API_URL ||
-                    "/api";
+                  const apiBaseUrl = import.meta.env.VITE_API_URL || "/api";
                   try {
                     const response = await fetch(`${apiBaseUrl}/contact`, {
                       method: "POST",

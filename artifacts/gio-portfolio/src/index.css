@@ -263,7 +263,9 @@ button {
   align-items: center;
   gap: 6px;
   color: hsl(var(--foreground));
-  transition: color 200ms ease, gap 200ms ease;
+  transition:
+    color 200ms ease,
+    gap 200ms ease;
 }
 .wordmark:hover {
   gap: 9px;
@@ -573,8 +575,7 @@ button {
   object-fit: cover;
 }
 .media-frame .media-content {
-  transition:
-    filter 1s var(--ease-editorial);
+  transition: filter 1s var(--ease-editorial);
 }
 .project-card:hover .media-frame .media-content {
   filter: saturate(1.08);
@@ -677,7 +678,9 @@ button {
   color: hsl(var(--background));
   background: hsl(var(--foreground) / 0.24);
   cursor: pointer;
-  transition: background 180ms ease, transform 180ms ease;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
 }
 .sound-toggle:hover {
   background: hsl(var(--foreground) / 0.58);
@@ -1138,49 +1141,49 @@ button {
   }
 }
 
-  .site-cursor {
-    position: fixed;
-    z-index: 100;
-    top: 0;
-    left: 0;
-    width: 18px;
-    height: 18px;
-    pointer-events: none;
-    opacity: 0;
-    transform: translate3d(-2px, -2px, 0);
-    transition: opacity 180ms ease;
-  }
-  .site-cursor.is-visible {
-    opacity: 1;
-  }
-  .site-cursor-pointer {
-    display: block;
-    width: 15px;
-    height: 19px;
-    color: hsl(var(--primary));
-    filter: drop-shadow(0 1px 1px hsl(var(--foreground) / 0.2));
-    transition:
-      transform 220ms var(--ease-editorial),
-      color 220ms ease;
-  }
-  .site-cursor.is-interactive .site-cursor-pointer {
-    color: hsl(var(--foreground));
-    transform: scale(1.12);
-  }
-  .has-custom-cursor,
-  .has-custom-cursor body,
-  .has-custom-cursor a,
-  .has-custom-cursor button,
-  .has-custom-cursor input,
-  .has-custom-cursor textarea {
-    cursor: none;
-  }
+.site-cursor {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-2px, -2px, 0);
+  transition: opacity 180ms ease;
+}
+.site-cursor.is-visible {
+  opacity: 1;
+}
+.site-cursor-pointer {
+  display: block;
+  width: 15px;
+  height: 19px;
+  color: hsl(var(--primary));
+  filter: drop-shadow(0 1px 1px hsl(var(--foreground) / 0.2));
+  transition:
+    transform 220ms var(--ease-editorial),
+    color 220ms ease;
+}
+.site-cursor.is-interactive .site-cursor-pointer {
+  color: hsl(var(--foreground));
+  transform: scale(1.12);
+}
+.has-custom-cursor,
+.has-custom-cursor body,
+.has-custom-cursor a,
+.has-custom-cursor button,
+.has-custom-cursor input,
+.has-custom-cursor textarea {
+  cursor: none;
+}
 
-  @media (hover: none), (pointer: coarse) {
-    .site-cursor {
-      display: none;
-    }
+@media (hover: none), (pointer: coarse) {
+  .site-cursor {
+    display: none;
   }
+}
 
 .site-header {
   position: relative;
@@ -1391,7 +1394,9 @@ button {
   background: transparent;
   cursor: pointer;
   font: inherit;
-  transition: color 180ms ease, transform 180ms var(--ease-editorial);
+  transition:
+    color 180ms ease,
+    transform 180ms var(--ease-editorial);
 }
 .back-to-top:hover {
   color: hsl(var(--foreground));
