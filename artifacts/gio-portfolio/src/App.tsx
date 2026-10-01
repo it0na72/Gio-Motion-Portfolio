@@ -1013,6 +1013,15 @@ function Contact() {
     });
     setError(false);
   };
+  useEffect(() => {
+    const configuredApiUrl = import.meta.env.VITE_API_URL;
+    if (import.meta.env.DEV && !configuredApiUrl) return;
+    const apiBaseUrl = configuredApiUrl || "/api";
+    void fetch(`${apiBaseUrl}/healthz`, { cache: "no-store" }).catch(
+      () => undefined,
+    );
+  }, []);
+
   return (
     <section className="page-section contact-page" data-testid="page-contact">
       <div className="page-width">
