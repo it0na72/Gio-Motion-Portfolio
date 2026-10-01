@@ -133,38 +133,25 @@ button {
     ),
     radial-gradient(circle at 92% 64%, hsl(35 65% 58% / 0.12), transparent 32%);
 }
-.site-shell::before {
+body::before,
+body::after {
   content: "";
   position: fixed;
   z-index: 31;
-  inset: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 46%,
-    hsl(var(--background) / 0.08) 92%,
-    hsl(var(--background) / 0.14) 100%
-  );
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  mask-image: linear-gradient(
-    to bottom,
-    black 0%,
-    transparent 9%,
-    transparent 91%,
-    black 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    black 0%,
-    transparent 9%,
-    transparent 91%,
-    black 100%
-  );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
-.site-shell.is-at-page-end::before {
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+body::before {
+  top: 0;
+  background: linear-gradient(to bottom, hsl(var(--background) / 0.12), transparent);
+}
+body::after {
+  bottom: 0;
+  background: linear-gradient(to top, hsl(var(--background) / 0.12), transparent);
 }
 .site-shell::after {
   content: "";
@@ -535,6 +522,8 @@ button {
   position: relative;
   overflow: hidden;
   border-radius: 20px;
+  -webkit-clip-path: inset(0 round 20px);
+  clip-path: inset(0 round 20px);
   background: hsl(var(--secondary));
   box-shadow: 0 12px 28px hsl(var(--foreground) / 0.14);
   transform-origin: center;
@@ -575,6 +564,7 @@ button {
   object-fit: cover;
 }
 .media-frame .media-content {
+  border-radius: inherit;
   transition: filter 1s var(--ease-editorial);
 }
 .project-card:hover .media-frame .media-content {
@@ -662,6 +652,26 @@ button {
   border-radius: 50%;
   color: hsl(var(--background));
   opacity: 0.9;
+}
+.data-saver-play {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid hsl(var(--background) / 0.75);
+  border-radius: 50%;
+  color: hsl(var(--background));
+  background: hsl(var(--foreground) / 0.45);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+.data-saver-play:hover {
+  background: hsl(var(--foreground) / 0.7);
 }
 .sound-toggle {
   position: absolute;

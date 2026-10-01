@@ -471,15 +471,32 @@ function PlaceholderVisual({ project }: { project: Project }) {
 function MediaVisual({
   project,
   showVideo = false,
+  priority = false,
 }: {
   project: Project;
   showVideo?: boolean;
+  priority?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaFrameRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldPlay, setShouldPlay] = useState(false);
+  const [manualPlayback, setManualPlayback] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(getStoredVolume);
+  const [isDataSaver] = useState(() => {
+    if (typeof navigator === "undefined") return false;
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    return Boolean(
+      connection?.saveData ||
+        /(^|-)2g$/.test(connection?.effectiveType ?? "") ||
+        window.matchMedia("(pointer: coarse)").matches,
+    );
+  });
   const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
@@ -555,29 +572,35 @@ function MediaVisual({
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
-    // mounts the <video> tag well ahead of the viewport so it has time to buffer
-    const mountObserver = new IntersectionObserver(
+    const loadObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) setShouldLoad(true);
       },
-      { threshold: 0, rootMargin: "900px 0px" },
+      {
+        threshold: 0,
+        rootMargin: isDataSaver ? "0px" : priority ? "1200px 0px" : "500px 0px",
+      },
     );
-    mountObserver.observe(frame);
-    return () => mountObserver.disconnect();
-  }, [project.videoUrl]);
+    loadObserver.observe(frame);
+    return () => loadObserver.disconnect();
+  }, [isDataSaver, priority, project.videoUrl]);
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
-    // only actually decodes/plays once the card is close to visible, keeping concurrency low
     const playObserver = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
-          if (!prefersReducedMotion && videoRef.current) {
+        const shouldPlayVideo = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+        setShouldPlay(
+          shouldPlayVideo && !prefersReducedMotion && (!isDataSaver || manualPlayback),
+        );
+        if (shouldPlayVideo && !prefersReducedMotion && (!isDataSaver || manualPlayback)) {
+          if (videoRef.current) {
             requestVideoPlayback(videoRef.current);
           }
         } else if (videoRef.current) {
           releaseVideoPlayback(videoRef.current);
         }
+        if (!shouldPlayVideo) setManualPlayback(false);
       },
       { threshold: [0, 0.3], rootMargin: "0px 0px -10% 0px" },
     );
@@ -586,7 +609,7 @@ function MediaVisual({
       playObserver.disconnect();
       if (videoRef.current) releaseVideoPlayback(videoRef.current);
     };
-  }, [project.videoUrl, prefersReducedMotion]);
+  }, [isDataSaver, manualPlayback, project.videoUrl, prefersReducedMotion]);
   useEffect(() => {
     const handleOtherVideoAudio = (event: Event) => {
       const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
@@ -642,10 +665,12 @@ function MediaVisual({
           src={project.videoUrl}
           poster={project.thumbnail || undefined}
           muted={isMuted}
-          autoPlay={!prefersReducedMotion}
+          autoPlay={shouldPlay && !prefersReducedMotion}
           loop
           playsInline
-          preload="auto"
+          preload={
+            isDataSaver ? "none" : priority ? "auto" : "metadata"
+          }
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
@@ -654,8 +679,9 @@ function MediaVisual({
           className="media-content video-poster"
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
-          loading="eager"
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
         />
       ) : project.thumbnail ? (
         <motion.img
@@ -671,10 +697,12 @@ function MediaVisual({
       )}
       {showVideo && project.videoUrl && shouldLoad && (
         <>
-          <span className="play-indicator" aria-hidden="true">
-            <Play size={11} fill="currentColor" strokeWidth={1.2} />
-          </span>
-          {!isMuted && (
+          {!isDataSaver && (
+            <span className="play-indicator" aria-hidden="true">
+              <Play size={11} fill="currentColor" strokeWidth={1.2} />
+            </span>
+          )}
+          {(!isDataSaver || manualPlayback) && !isMuted && (
             <input
               type="range"
               className="volume-slider"
@@ -687,19 +715,35 @@ function MediaVisual({
               onChange={handleVolumeChange}
             />
           )}
-          <button
-            type="button"
-            className="sound-toggle"
-            aria-label={isMuted ? "Turn sound on" : "Mute video"}
-            title={isMuted ? "Turn sound on" : "Mute video"}
-            onClick={(event) => {
-              event.stopPropagation();
-              toggleAudio();
-            }}
-          >
-            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-          </button>
+          {(!isDataSaver || manualPlayback) && (
+            <button
+              type="button"
+              className="sound-toggle"
+              aria-label={isMuted ? "Turn sound on" : "Mute video"}
+              title={isMuted ? "Turn sound on" : "Mute video"}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleAudio();
+              }}
+            >
+              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            </button>
+          )}
         </>
+      )}
+      {showVideo && project.videoUrl && isDataSaver && shouldLoad && !manualPlayback && (
+        <button
+          type="button"
+          className="data-saver-play"
+          aria-label={`Play ${project.title} preview`}
+          onClick={() => {
+            setManualPlayback(true);
+            setShouldPlay(true);
+            if (videoRef.current) requestVideoPlayback(videoRef.current);
+          }}
+        >
+          <Play size={14} fill="currentColor" aria-hidden="true" />
+        </button>
       )}
       {project.placeholder && (
         <span className="placeholder-badge">{t.media.placeholderBadge}</span>
@@ -727,7 +771,7 @@ function ProjectCard({
         className="project-card group"
         data-testid={`card-project-${project.slug}`}
       >
-        <MediaVisual project={project} showVideo />
+        <MediaVisual project={project} showVideo priority={index < 2} />
         <div className="project-card-meta">
           <p className="project-kicker">{category}</p>
         </div>
