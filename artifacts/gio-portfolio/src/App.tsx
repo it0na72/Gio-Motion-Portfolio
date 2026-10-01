@@ -35,6 +35,13 @@ import {
   useLocation,
 } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -45,6 +52,18 @@ import "@/index.css";
 
 const queryClient = new QueryClient();
 type Filter = "ALL" | "MOTION DESIGN" | "VIDEO EDITING";
+type ContactField =
+  | "name"
+  | "email"
+  | "project"
+  | "clientType"
+  | "service"
+  | "budget"
+  | "deadline"
+  | "deadlineDate"
+  | "reference"
+  | "message";
+type ContactFieldErrors = Partial<Record<ContactField, string>>;
 
 const VOLUME_STORAGE_KEY = "gio-portfolio-volume";
 const DEFAULT_VOLUME = 0.3;
@@ -481,6 +500,7 @@ function MediaVisual({
   const mediaFrameRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [shouldPlay, setShouldPlay] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(getStoredVolume);
   const prefersReducedMotion = useReducedMotion();
@@ -641,20 +661,33 @@ function MediaVisual({
       onMouseLeave={resetMediaMotion}
     >
       {project.videoUrl && shouldLoad ? (
-        <motion.video
-          ref={videoRef}
-          className="media-content"
-          style={{ x: smoothX, y: smoothY, scale: smoothScale }}
-          src={project.videoUrl}
-          poster={project.thumbnail || undefined}
-          muted={isMuted}
-          autoPlay={shouldPlay && !prefersReducedMotion}
-          loop
-          playsInline
-          preload={priority ? "auto" : "metadata"}
-          onClick={toggleAudio}
-          aria-label={`${project.title} ${t.project.videoPreview}`}
-        />
+        <>
+          <motion.video
+            ref={videoRef}
+            className="media-content media-video"
+            style={{ x: smoothX, y: smoothY, scale: smoothScale }}
+            src={project.videoUrl}
+            poster={project.thumbnail || undefined}
+            muted={isMuted}
+            autoPlay={shouldPlay && !prefersReducedMotion}
+            loop
+            playsInline
+            preload={priority ? "auto" : "metadata"}
+            onLoadedData={() => setIsVideoReady(true)}
+            onClick={toggleAudio}
+            aria-label={`${project.title} ${t.project.videoPreview}`}
+          />
+          {!isVideoReady && project.thumbnail && (
+            <motion.img
+              className="media-content video-poster is-buffering"
+              src={project.thumbnail}
+              alt={`${project.title} ${t.project.thumbnail}`}
+              decoding="async"
+              fetchPriority={priority ? "high" : "auto"}
+              aria-hidden="true"
+            />
+          )}
+        </>
       ) : project.videoUrl && project.thumbnail ? (
         <motion.img
           className="media-content video-poster"
@@ -944,11 +977,42 @@ function ContactBand() {
   );
 }
 
+function ContactFieldError({
+  field,
+  message,
+}: {
+  field: ContactField;
+  message?: string;
+}) {
+  if (!message) return null;
+  return (
+    <span
+      id={`contact-error-${field}`}
+      className="contact-field-error"
+      data-contact-error={field}
+      role="alert"
+    >
+      {message}
+    </span>
+  );
+}
+
 function Contact() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({});
+  const [openSelect, setOpenSelect] = useState<ContactField | null>(null);
   const { t } = useLanguage();
+  const clearFieldError = (field: ContactField) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setError(false);
+  };
   return (
     <section className="page-section contact-page" data-testid="page-contact">
       <div className="page-width">
@@ -959,6 +1023,7 @@ function Contact() {
         <div className="contact-grid">
           <div className="contact-details">
             <p className="contact-lead">{t.contact.lead}</p>
+            <p className="contact-intro">{t.contact.intro}</p>
             <a
               href="mailto:gio@lusonihongo.com"
               className="text-link"
@@ -1011,19 +1076,91 @@ function Contact() {
             ) : (
               <form
                 className="contact-form"
+                noValidate
                 onSubmit={async (event) => {
                   event.preventDefault();
-                  setSubmitting(true);
                   setError(false);
                   const form = event.currentTarget;
+                  const formData = new FormData(form);
+                  const readValue = (field: ContactField) => {
+                    const value = formData.get(field);
+                    return typeof value === "string" ? value.trim() : "";
+                  };
+                  const nextErrors: ContactFieldErrors = {};
+                  const requiredFields: ContactField[] = [
+                    "name",
+                    "email",
+                    "project",
+                    "clientType",
+                    "service",
+                    "budget",
+                    "deadline",
+                    "message",
+                  ];
+
+                  for (const field of requiredFields) {
+                    if (!readValue(field)) {
+                      nextErrors[field] = t.contact.validation.required;
+                    }
+                  }
+
+                  const email = readValue("email");
+                  if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+                    nextErrors.email = t.contact.validation.invalidEmail;
+                  }
+
+                  const deadlineDate = readValue("deadlineDate");
+                  if (
+                    deadlineDate &&
+                    (!/^\d{4}-\d{2}-\d{2}$/.test(deadlineDate) ||
+                      Number.isNaN(Date.parse(`${deadlineDate}T00:00:00Z`)) ||
+                      !new Date(`${deadlineDate}T00:00:00Z`)
+                        .toISOString()
+                        .startsWith(deadlineDate))
+                  ) {
+                    nextErrors.deadlineDate = t.contact.validation.invalidDate;
+                  }
+
+                  const reference = readValue("reference");
+                  if (reference) {
+                    try {
+                      const referenceUrl = new URL(reference);
+                      if (!["http:", "https:"].includes(referenceUrl.protocol)) {
+                        nextErrors.reference = t.contact.validation.invalidUrl;
+                      }
+                    } catch {
+                      nextErrors.reference = t.contact.validation.invalidUrl;
+                    }
+                  }
+
+                  setFieldErrors(nextErrors);
+                  const firstError = Object.keys(nextErrors)[0] as
+                    | ContactField
+                    | undefined;
+                  if (firstError) {
+                    const fieldLabel = form.querySelector<HTMLElement>(
+                      `[data-contact-field="${firstError}"]`,
+                    );
+                    const focusTarget =
+                      fieldLabel?.querySelector<HTMLElement>(
+                        "[data-contact-select]",
+                      ) ??
+                      fieldLabel?.querySelector<HTMLElement>("input, textarea");
+                    focusTarget?.focus({ preventScroll: true });
+                    fieldLabel?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                    return;
+                  }
+
+                  setSubmitting(true);
                   const apiBaseUrl = import.meta.env.VITE_API_URL || "/api";
                   try {
                     const response = await fetch(`${apiBaseUrl}/contact`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(
-                        Object.fromEntries(new FormData(form)),
-                      ),
+                      body: JSON.stringify(Object.fromEntries(formData)),
                     });
                     if (response.ok) {
                       setSent(true);
@@ -1046,42 +1183,310 @@ function Contact() {
                   autoComplete="off"
                   aria-hidden="true"
                 />
-                <label>
+                <label data-contact-field="name">
                   <span>{t.contact.name}</span>
                   <input
                     required
                     name="name"
+                    maxLength={120}
                     placeholder={t.contact.namePlaceholder}
+                    aria-invalid={Boolean(fieldErrors.name)}
+                    aria-describedby={
+                      fieldErrors.name ? "contact-error-name" : undefined
+                    }
+                    onChange={() => clearFieldError("name")}
                     data-testid="input-contact-name"
                   />
+                  <ContactFieldError field="name" message={fieldErrors.name} />
                 </label>
-                <label>
+                <label data-contact-field="email">
                   <span>{t.contact.email}</span>
                   <input
                     required
                     type="email"
                     name="email"
+                    maxLength={240}
                     placeholder={t.contact.emailPlaceholder}
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={
+                      fieldErrors.email ? "contact-error-email" : undefined
+                    }
+                    onChange={() => clearFieldError("email")}
                     data-testid="input-contact-email"
                   />
+                  <ContactFieldError field="email" message={fieldErrors.email} />
                 </label>
-                <label>
+                <label data-contact-field="project">
                   <span>{t.contact.project}</span>
                   <input
                     required
                     name="project"
+                    maxLength={160}
                     placeholder={t.contact.projectPlaceholder}
+                    aria-invalid={Boolean(fieldErrors.project)}
+                    aria-describedby={
+                      fieldErrors.project ? "contact-error-project" : undefined
+                    }
+                    onChange={() => clearFieldError("project")}
                     data-testid="input-contact-project"
                   />
+                  <ContactFieldError
+                    field="project"
+                    message={fieldErrors.project}
+                  />
                 </label>
-                <label>
+                <div className="contact-form-grid contact-form-grid--question-separators">
+                  <label data-contact-field="clientType">
+                    <span>{t.contact.clientType}</span>
+                    <Select
+                      required
+                      open={openSelect === "clientType"}
+                      onOpenChange={(open) =>
+                        setOpenSelect(open ? "clientType" : null)
+                      }
+                      name="clientType"
+                      defaultValue=""
+                      onValueChange={() => clearFieldError("clientType")}
+                    >
+                      <SelectTrigger
+                        className="contact-select-trigger"
+                        aria-invalid={Boolean(fieldErrors.clientType)}
+                        aria-describedby={
+                          fieldErrors.clientType
+                            ? "contact-error-clientType"
+                            : undefined
+                        }
+                        data-contact-select
+                      >
+                        <SelectValue placeholder={t.contact.chooseOption} />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="contact-select-content"
+                        onPointerDownOutside={() => setOpenSelect(null)}
+                      >
+                        <SelectItem className="contact-select-item" value="saas">
+                          {t.contact.clientTypes.saas}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="creator">
+                          {t.contact.clientTypes.creator}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="brand">
+                          {t.contact.clientTypes.brand}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="other">
+                          {t.contact.clientTypes.other}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ContactFieldError
+                      field="clientType"
+                      message={fieldErrors.clientType}
+                    />
+                  </label>
+                  <label data-contact-field="service">
+                    <span>{t.contact.service}</span>
+                    <Select
+                      required
+                      open={openSelect === "service"}
+                      onOpenChange={(open) =>
+                        setOpenSelect(open ? "service" : null)
+                      }
+                      name="service"
+                      defaultValue=""
+                      onValueChange={() => clearFieldError("service")}
+                    >
+                      <SelectTrigger
+                        className="contact-select-trigger"
+                        aria-invalid={Boolean(fieldErrors.service)}
+                        aria-describedby={
+                          fieldErrors.service
+                            ? "contact-error-service"
+                            : undefined
+                        }
+                        data-contact-select
+                      >
+                        <SelectValue placeholder={t.contact.chooseOption} />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="contact-select-content"
+                        onPointerDownOutside={() => setOpenSelect(null)}
+                      >
+                        <SelectItem className="contact-select-item" value="video-editing">
+                          {t.contact.services.videoEditing}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="motion-design">
+                          {t.contact.services.motionDesign}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="product-video">
+                          {t.contact.services.productVideo}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="social-content">
+                          {t.contact.services.socialContent}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="ongoing">
+                          {t.contact.services.ongoing}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ContactFieldError
+                      field="service"
+                      message={fieldErrors.service}
+                    />
+                  </label>
+                </div>
+                <div className="contact-form-grid contact-form-grid--question-separators">
+                  <label data-contact-field="budget">
+                    <span>{t.contact.budget}</span>
+                    <Select
+                      required
+                      open={openSelect === "budget"}
+                      onOpenChange={(open) =>
+                        setOpenSelect(open ? "budget" : null)
+                      }
+                      name="budget"
+                      defaultValue=""
+                      onValueChange={() => clearFieldError("budget")}
+                    >
+                      <SelectTrigger
+                        className="contact-select-trigger"
+                        aria-invalid={Boolean(fieldErrors.budget)}
+                        aria-describedby={
+                          fieldErrors.budget
+                            ? "contact-error-budget"
+                            : undefined
+                        }
+                        data-contact-select
+                      >
+                        <SelectValue placeholder={t.contact.chooseOption} />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="contact-select-content"
+                        onPointerDownOutside={() => setOpenSelect(null)}
+                      >
+                        <SelectItem className="contact-select-item" value="under-500">
+                          {t.contact.budgets.under500}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="500-1000">
+                          {t.contact.budgets.from500To1000}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="1000-2500">
+                          {t.contact.budgets.from1000To2500}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="2500-5000">
+                          {t.contact.budgets.from2500To5000}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="5000-plus">
+                          {t.contact.budgets.over5000}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ContactFieldError field="budget" message={fieldErrors.budget} />
+                  </label>
+                  <label data-contact-field="deadline">
+                    <span>{t.contact.deadline}</span>
+                    <Select
+                      required
+                      open={openSelect === "deadline"}
+                      onOpenChange={(open) =>
+                        setOpenSelect(open ? "deadline" : null)
+                      }
+                      name="deadline"
+                      defaultValue=""
+                      onValueChange={() => clearFieldError("deadline")}
+                    >
+                      <SelectTrigger
+                        className="contact-select-trigger"
+                        aria-invalid={Boolean(fieldErrors.deadline)}
+                        aria-describedby={
+                          fieldErrors.deadline
+                            ? "contact-error-deadline"
+                            : undefined
+                        }
+                        data-contact-select
+                      >
+                        <SelectValue placeholder={t.contact.chooseOption} />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="contact-select-content"
+                        onPointerDownOutside={() => setOpenSelect(null)}
+                      >
+                        <SelectItem className="contact-select-item" value="under-2-weeks">
+                          {t.contact.deadlines.under2Weeks}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="2-4-weeks">
+                          {t.contact.deadlines.from2To4Weeks}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="1-2-months">
+                          {t.contact.deadlines.from1To2Months}
+                        </SelectItem>
+                        <SelectItem className="contact-select-item" value="flexible">
+                          {t.contact.deadlines.flexible}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ContactFieldError
+                      field="deadline"
+                      message={fieldErrors.deadline}
+                    />
+                  </label>
+                </div>
+                <label data-contact-field="deadlineDate">
+                  <span>{t.contact.deadlineDate}</span>
+                  <input
+                    type="date"
+                    name="deadlineDate"
+                    aria-invalid={Boolean(fieldErrors.deadlineDate)}
+                    aria-describedby={
+                      fieldErrors.deadlineDate
+                        ? "contact-error-deadlineDate"
+                        : undefined
+                    }
+                    onChange={() => clearFieldError("deadlineDate")}
+                  />
+                  <ContactFieldError
+                    field="deadlineDate"
+                    message={fieldErrors.deadlineDate}
+                  />
+                </label>
+                <label data-contact-field="reference">
+                  <span>{t.contact.reference}</span>
+                  <input
+                    type="url"
+                    name="reference"
+                    maxLength={1000}
+                    placeholder={t.contact.referencePlaceholder}
+                    aria-invalid={Boolean(fieldErrors.reference)}
+                    aria-describedby={
+                      fieldErrors.reference
+                        ? "contact-error-reference"
+                        : undefined
+                    }
+                    onChange={() => clearFieldError("reference")}
+                    data-testid="input-contact-reference"
+                  />
+                  <ContactFieldError
+                    field="reference"
+                    message={fieldErrors.reference}
+                  />
+                </label>
+                <label data-contact-field="message">
                   <span>{t.contact.message}</span>
                   <textarea
                     required
                     name="message"
                     rows={4}
+                    maxLength={5000}
                     placeholder={t.contact.messagePlaceholder}
+                    aria-invalid={Boolean(fieldErrors.message)}
+                    aria-describedby={
+                      fieldErrors.message ? "contact-error-message" : undefined
+                    }
+                    onChange={() => clearFieldError("message")}
                     data-testid="input-contact-message"
+                  />
+                  <ContactFieldError
+                    field="message"
+                    message={fieldErrors.message}
                   />
                 </label>
                 <button
