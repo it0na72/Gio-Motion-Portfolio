@@ -185,7 +185,12 @@ const translations = {
     },
   },
   pt: {
-    nav: { work: "Vídeos", about: "Sobre", contact: "Contacto", home: "Início" },
+    nav: {
+      work: "Vídeos",
+      about: "Sobre",
+      contact: "Contacto",
+      home: "Início",
+    },
     navigation: {
       primary: "Navegação principal",
       mobile: "Navegação móvel",
@@ -243,7 +248,8 @@ const translations = {
         "Transformo ideias complexas de marcas e criadores em histórias visuais cinematográficas. Conta-me o que estás a construir, para quem e de que precisas. Leva cerca de 2 minutos; respondo em até 3 dias úteis.",
       messageNoted: "Mensagem recebida.",
       thanks: "Entrarei em contacto o mais rápido possível.",
-      confirmationDetails: "Podes tambem enviar-me um email diretamente se preferires.",
+      confirmationDetails:
+        "Podes tambem enviar-me um email diretamente se preferires.",
       emailDirect: "Enviar email direto ao Gio",
       sendAnother: "Enviar outra",
       name: "Nome",
@@ -352,7 +358,12 @@ const translations = {
     },
   },
   jp: {
-    nav: { work: "制作実績", about: "プロフィール", contact: "お問い合わせ", home: "ホーム" },
+    nav: {
+      work: "制作実績",
+      about: "プロフィール",
+      contact: "お問い合わせ",
+      home: "ホーム",
+    },
     navigation: {
       primary: "メインナビゲーション",
       mobile: "モバイルナビゲーション",
@@ -411,7 +422,8 @@ const translations = {
         "ブランドやクリエイターのアイデアを、映像編集とモーションデザインで形にします。ご依頼内容や目的、ご希望の納期などをお聞かせください。フォームの入力は約2分、通常3営業日以内にご返信いたします。",
       messageNoted: "メッセージを受け取りました。",
       thanks: "近日中にご返信いたします。",
-      confirmationDetails: "直接メールをご希望の場合は、下のリンクをご利用ください。",
+      confirmationDetails:
+        "直接メールをご希望の場合は、下のリンクをご利用ください。",
       emailDirect: "Gioに直接メールする",
       sendAnother: "別のメッセージを送る",
       name: "お名前",
@@ -460,7 +472,8 @@ const translations = {
       validation: {
         required: "この項目は必須です。",
         invalidEmail: "有効なメールアドレスを入力してください。",
-        invalidUrl: "http:// または https:// で始まる有効なリンクを入力してください。",
+        invalidUrl:
+          "http:// または https:// で始まる有効なリンクを入力してください。",
         invalidDate: "有効な日付を入力してください。",
       },
       sendMessage: "送信",

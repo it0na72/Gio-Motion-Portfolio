@@ -48,7 +48,10 @@ const resolveOption = (value: unknown, options: Record<string, string>) => {
 };
 
 const sanitizeSingleLine = (value: string) =>
-  value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  value
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const sanitizeMessage = (value: string) =>
   value
@@ -99,7 +102,9 @@ router.post("/contact", async (req, res) => {
     });
   } else if (attempt.count >= maxContactAttempts) {
     res.setHeader("Retry-After", Math.ceil((attempt.resetAt - now) / 1000));
-    res.status(429).json({ error: "Too many messages. Please try again later." });
+    res
+      .status(429)
+      .json({ error: "Too many messages. Please try again later." });
     return;
   } else {
     attempt.count += 1;

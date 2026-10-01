@@ -595,7 +595,8 @@ function MediaVisual({
     if (!frame || !project.videoUrl) return;
     const playObserver = new IntersectionObserver(
       ([entry]) => {
-        const shouldPlayVideo = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+        const shouldPlayVideo =
+          entry.isIntersecting && entry.intersectionRatio >= 0.3;
         setShouldPlay(shouldPlayVideo && !prefersReducedMotion);
         if (shouldPlayVideo && !prefersReducedMotion) {
           if (videoRef.current) {
@@ -1134,7 +1135,9 @@ function Contact() {
                   if (reference) {
                     try {
                       const referenceUrl = new URL(reference);
-                      if (!["http:", "https:"].includes(referenceUrl.protocol)) {
+                      if (
+                        !["http:", "https:"].includes(referenceUrl.protocol)
+                      ) {
                         nextErrors.reference = t.contact.validation.invalidUrl;
                       }
                     } catch {
@@ -1144,8 +1147,7 @@ function Contact() {
 
                   setFieldErrors(nextErrors);
                   const firstError = Object.keys(nextErrors)[0] as
-                    | ContactField
-                    | undefined;
+                    ContactField | undefined;
                   if (firstError) {
                     const fieldLabel = form.querySelector<HTMLElement>(
                       `[data-contact-field="${firstError}"]`,
@@ -1223,7 +1225,10 @@ function Contact() {
                     onChange={() => clearFieldError("email")}
                     data-testid="input-contact-email"
                   />
-                  <ContactFieldError field="email" message={fieldErrors.email} />
+                  <ContactFieldError
+                    field="email"
+                    message={fieldErrors.email}
+                  />
                 </label>
                 <label data-contact-field="project">
                   <span>{t.contact.project}</span>
@@ -1273,16 +1278,28 @@ function Contact() {
                         className="contact-select-content"
                         onPointerDownOutside={() => setOpenSelect(null)}
                       >
-                        <SelectItem className="contact-select-item" value="saas">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="saas"
+                        >
                           {t.contact.clientTypes.saas}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="creator">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="creator"
+                        >
                           {t.contact.clientTypes.creator}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="brand">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="brand"
+                        >
                           {t.contact.clientTypes.brand}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="other">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="other"
+                        >
                           {t.contact.clientTypes.other}
                         </SelectItem>
                       </SelectContent>
@@ -1320,19 +1337,34 @@ function Contact() {
                         className="contact-select-content"
                         onPointerDownOutside={() => setOpenSelect(null)}
                       >
-                        <SelectItem className="contact-select-item" value="video-editing">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="video-editing"
+                        >
                           {t.contact.services.videoEditing}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="motion-design">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="motion-design"
+                        >
                           {t.contact.services.motionDesign}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="product-video">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="product-video"
+                        >
                           {t.contact.services.productVideo}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="social-content">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="social-content"
+                        >
                           {t.contact.services.socialContent}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="ongoing">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="ongoing"
+                        >
                           {t.contact.services.ongoing}
                         </SelectItem>
                       </SelectContent>
@@ -1372,24 +1404,42 @@ function Contact() {
                         className="contact-select-content"
                         onPointerDownOutside={() => setOpenSelect(null)}
                       >
-                        <SelectItem className="contact-select-item" value="under-500">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="under-500"
+                        >
                           {t.contact.budgets.under500}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="500-1000">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="500-1000"
+                        >
                           {t.contact.budgets.from500To1000}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="1000-2500">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="1000-2500"
+                        >
                           {t.contact.budgets.from1000To2500}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="2500-5000">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="2500-5000"
+                        >
                           {t.contact.budgets.from2500To5000}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="5000-plus">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="5000-plus"
+                        >
                           {t.contact.budgets.over5000}
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <ContactFieldError field="budget" message={fieldErrors.budget} />
+                    <ContactFieldError
+                      field="budget"
+                      message={fieldErrors.budget}
+                    />
                   </label>
                   <label data-contact-field="deadline">
                     <span>{t.contact.deadline}</span>
@@ -1419,16 +1469,28 @@ function Contact() {
                         className="contact-select-content"
                         onPointerDownOutside={() => setOpenSelect(null)}
                       >
-                        <SelectItem className="contact-select-item" value="under-2-weeks">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="under-2-weeks"
+                        >
                           {t.contact.deadlines.under2Weeks}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="2-4-weeks">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="2-4-weeks"
+                        >
                           {t.contact.deadlines.from2To4Weeks}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="1-2-months">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="1-2-months"
+                        >
                           {t.contact.deadlines.from1To2Months}
                         </SelectItem>
-                        <SelectItem className="contact-select-item" value="flexible">
+                        <SelectItem
+                          className="contact-select-item"
+                          value="flexible"
+                        >
                           {t.contact.deadlines.flexible}
                         </SelectItem>
                       </SelectContent>

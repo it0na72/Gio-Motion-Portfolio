@@ -147,11 +147,19 @@ body::after {
 }
 body::before {
   top: 0;
-  background: linear-gradient(to bottom, hsl(var(--background) / 0.12), transparent);
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--background) / 0.12),
+    transparent
+  );
 }
 body::after {
   bottom: 0;
-  background: linear-gradient(to top, hsl(var(--background) / 0.12), transparent);
+  background: linear-gradient(
+    to top,
+    hsl(var(--background) / 0.12),
+    transparent
+  );
 }
 .site-shell::after {
   content: "";
