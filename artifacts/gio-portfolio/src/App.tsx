@@ -481,22 +481,8 @@ function MediaVisual({
   const mediaFrameRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [shouldPlay, setShouldPlay] = useState(false);
-  const [manualPlayback, setManualPlayback] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(getStoredVolume);
-  const [isDataSaver] = useState(() => {
-    if (typeof navigator === "undefined") return false;
-    const connection = (
-      navigator as Navigator & {
-        connection?: { saveData?: boolean; effectiveType?: string };
-      }
-    ).connection;
-    return Boolean(
-      connection?.saveData ||
-        /(^|-)2g$/.test(connection?.effectiveType ?? "") ||
-        window.matchMedia("(pointer: coarse)").matches,
-    );
-  });
   const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
@@ -578,29 +564,26 @@ function MediaVisual({
       },
       {
         threshold: 0,
-        rootMargin: isDataSaver ? "0px" : priority ? "1200px 0px" : "500px 0px",
+        rootMargin: priority ? "1200px 0px" : "500px 0px",
       },
     );
     loadObserver.observe(frame);
     return () => loadObserver.disconnect();
-  }, [isDataSaver, priority, project.videoUrl]);
+  }, [priority, project.videoUrl]);
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
     const playObserver = new IntersectionObserver(
       ([entry]) => {
         const shouldPlayVideo = entry.isIntersecting && entry.intersectionRatio >= 0.3;
-        setShouldPlay(
-          shouldPlayVideo && !prefersReducedMotion && (!isDataSaver || manualPlayback),
-        );
-        if (shouldPlayVideo && !prefersReducedMotion && (!isDataSaver || manualPlayback)) {
+        setShouldPlay(shouldPlayVideo && !prefersReducedMotion);
+        if (shouldPlayVideo && !prefersReducedMotion) {
           if (videoRef.current) {
             requestVideoPlayback(videoRef.current);
           }
         } else if (videoRef.current) {
           releaseVideoPlayback(videoRef.current);
         }
-        if (!shouldPlayVideo) setManualPlayback(false);
       },
       { threshold: [0, 0.3], rootMargin: "0px 0px -10% 0px" },
     );
@@ -609,7 +592,7 @@ function MediaVisual({
       playObserver.disconnect();
       if (videoRef.current) releaseVideoPlayback(videoRef.current);
     };
-  }, [isDataSaver, manualPlayback, project.videoUrl, prefersReducedMotion]);
+  }, [project.videoUrl, prefersReducedMotion]);
   useEffect(() => {
     const handleOtherVideoAudio = (event: Event) => {
       const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
@@ -668,9 +651,7 @@ function MediaVisual({
           autoPlay={shouldPlay && !prefersReducedMotion}
           loop
           playsInline
-          preload={
-            isDataSaver ? "none" : priority ? "auto" : "metadata"
-          }
+          preload={priority ? "auto" : "metadata"}
           onClick={toggleAudio}
           aria-label={`${project.title} ${t.project.videoPreview}`}
         />
@@ -697,12 +678,10 @@ function MediaVisual({
       )}
       {showVideo && project.videoUrl && shouldLoad && (
         <>
-          {!isDataSaver && (
-            <span className="play-indicator" aria-hidden="true">
-              <Play size={11} fill="currentColor" strokeWidth={1.2} />
-            </span>
-          )}
-          {(!isDataSaver || manualPlayback) && !isMuted && (
+          <span className="play-indicator" aria-hidden="true">
+            <Play size={11} fill="currentColor" strokeWidth={1.2} />
+          </span>
+          {!isMuted && (
             <input
               type="range"
               className="volume-slider"
@@ -715,35 +694,19 @@ function MediaVisual({
               onChange={handleVolumeChange}
             />
           )}
-          {(!isDataSaver || manualPlayback) && (
-            <button
-              type="button"
-              className="sound-toggle"
-              aria-label={isMuted ? "Turn sound on" : "Mute video"}
-              title={isMuted ? "Turn sound on" : "Mute video"}
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleAudio();
-              }}
-            >
-              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            </button>
-          )}
+          <button
+            type="button"
+            className="sound-toggle"
+            aria-label={isMuted ? "Turn sound on" : "Mute video"}
+            title={isMuted ? "Turn sound on" : "Mute video"}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleAudio();
+            }}
+          >
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
         </>
-      )}
-      {showVideo && project.videoUrl && isDataSaver && shouldLoad && !manualPlayback && (
-        <button
-          type="button"
-          className="data-saver-play"
-          aria-label={`Play ${project.title} preview`}
-          onClick={() => {
-            setManualPlayback(true);
-            setShouldPlay(true);
-            if (videoRef.current) requestVideoPlayback(videoRef.current);
-          }}
-        >
-          <Play size={14} fill="currentColor" aria-hidden="true" />
-        </button>
       )}
       {project.placeholder && (
         <span className="placeholder-badge">{t.media.placeholderBadge}</span>
