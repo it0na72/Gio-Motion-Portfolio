@@ -140,10 +140,10 @@ body::after {
   z-index: 31;
   left: 0;
   right: 0;
-  height: 22px;
+  height: 48px;
   pointer-events: none;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 body::before {
   top: 0;
@@ -152,6 +152,8 @@ body::before {
     hsl(var(--background) / 0.12),
     transparent
   );
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
 }
 body::after {
   bottom: 0;
@@ -160,6 +162,8 @@ body::after {
     hsl(var(--background) / 0.12),
     transparent
   );
+  mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%);
 }
 .site-shell::after {
   content: "";

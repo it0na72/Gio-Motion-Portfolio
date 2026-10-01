@@ -124,6 +124,7 @@ const translations = {
         "What do you need? Who is it for? Share the format, timeline, and any references...",
       validation: {
         required: "This field is required.",
+        invalidName: "Enter a name containing at least one letter.",
         invalidEmail: "Enter a valid email address.",
         invalidUrl: "Enter a valid link starting with http:// or https://.",
         invalidDate: "Enter a valid date.",
@@ -297,6 +298,7 @@ const translations = {
         "Do que precisas? Para quem é? Partilha o formato, o prazo e referências que já tenhas...",
       validation: {
         required: "Este campo é obrigatório.",
+        invalidName: "Introduz um nome que contenha pelo menos uma letra.",
         invalidEmail: "Introduz um endereço de email válido.",
         invalidUrl: "Introduz um link válido começado por http:// ou https://.",
         invalidDate: "Introduz uma data válida.",
@@ -471,6 +473,7 @@ const translations = {
         "必要なもの、対象、形式、スケジュール、参考資料などをご記入ください...",
       validation: {
         required: "この項目は必須です。",
+        invalidName: "名前には少なくとも1つの文字を入力してください。",
         invalidEmail: "有効なメールアドレスを入力してください。",
         invalidUrl:
           "http:// または https:// で始まる有効なリンクを入力してください。",

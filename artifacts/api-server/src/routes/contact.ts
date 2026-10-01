@@ -37,7 +37,7 @@ const deadlineLabels: Record<string, string> = {
 };
 
 const resolveOption = (value: unknown, options: Record<string, string>) => {
-  if (value === undefined) return "Not provided";
+  if (value === undefined || value === "") return "Not provided";
   if (
     typeof value !== "string" ||
     !Object.prototype.hasOwnProperty.call(options, value)
@@ -110,20 +110,17 @@ router.post("/contact", async (req, res) => {
     attempt.count += 1;
   }
 
-  if (
-    typeof name !== "string" ||
-    typeof email !== "string" ||
-    typeof project !== "string" ||
-    typeof message !== "string"
-  ) {
+  if (typeof name !== "string" || typeof email !== "string") {
     res.status(400).json({ error: "All contact fields are required." });
     return;
   }
 
   const cleanName = sanitizeSingleLine(name);
   const cleanEmail = sanitizeSingleLine(email);
-  const cleanProject = sanitizeSingleLine(project);
-  const cleanMessage = sanitizeMessage(message);
+  const cleanProject =
+    typeof project === "string" ? sanitizeSingleLine(project) : "";
+  const cleanMessage =
+    typeof message === "string" ? sanitizeMessage(message) : "";
   const cleanClientType = resolveOption(clientType, clientTypeLabels);
   const cleanService = resolveOption(service, serviceLabels);
   const cleanBudget = resolveOption(budget, budgetLabels);
@@ -151,9 +148,10 @@ router.post("/contact", async (req, res) => {
 
   if (
     !cleanName ||
+    !/\p{L}/u.test(cleanName) ||
     !cleanEmail ||
-    !cleanProject ||
-    !cleanMessage ||
+    (project !== undefined && typeof project !== "string") ||
+    (message !== undefined && typeof message !== "string") ||
     cleanName.length > 120 ||
     cleanEmail.length > 240 ||
     cleanProject.length > 160 ||
@@ -186,8 +184,10 @@ router.post("/contact", async (req, res) => {
     const resend = new Resend(apiKey);
     const safeName = escapeHtml(cleanName);
     const safeEmail = escapeHtml(cleanEmail);
-    const safeProject = escapeHtml(cleanProject);
-    const safeMessage = escapeHtml(cleanMessage).replace(/\n/g, "<br />");
+    const projectLabel = cleanProject || "Not provided";
+    const messageText = cleanMessage || "No project brief provided.";
+    const safeProject = escapeHtml(projectLabel);
+    const safeMessage = escapeHtml(messageText).replace(/\n/g, "<br />");
     const detailRows = [
       ["Client type", cleanClientType],
       ["Service", cleanService],
@@ -209,14 +209,14 @@ router.post("/contact", async (req, res) => {
       from,
       to,
       replyTo: cleanEmail,
-      subject: `Portfolio enquiry: ${cleanProject}`,
+      subject: `Portfolio enquiry: ${cleanProject || cleanName}`,
       text: [
         `Name: ${cleanName}`,
         `Email: ${cleanEmail}`,
-        `Project: ${cleanProject}`,
+        `Project: ${projectLabel}`,
         ...detailRows.map(([label, value]) => `${label}: ${value}`),
         "",
-        cleanMessage,
+        messageText,
       ].join("\n"),
       html: `
         <div style="margin:0;background:#f1eee4;color:#292623;font-family:Arial,sans-serif;padding:32px 16px;">

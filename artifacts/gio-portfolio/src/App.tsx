@@ -121,6 +121,30 @@ function isVerticalAspectRatio(aspectRatio: string) {
   return Boolean(width) && Boolean(height) && width < height;
 }
 
+function normalizeTargetDate(value: string) {
+  if (!value) return "";
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return null;
+
+  const [, dayText, monthText, yearText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const date = new Date(0);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day);
+  if (
+    year < 1000 ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${yearText}-${monthText}-${dayText}`;
+}
+
 function PageTransition({ active }: { active: boolean }) {
   return (
     <div
@@ -1100,12 +1124,6 @@ function Contact() {
                   const requiredFields: ContactField[] = [
                     "name",
                     "email",
-                    "project",
-                    "clientType",
-                    "service",
-                    "budget",
-                    "deadline",
-                    "message",
                   ];
 
                   for (const field of requiredFields) {
@@ -1119,15 +1137,14 @@ function Contact() {
                     nextErrors.email = t.contact.validation.invalidEmail;
                   }
 
+                  const name = readValue("name");
+                  if (name && !/\p{L}/u.test(name)) {
+                    nextErrors.name = t.contact.validation.invalidName;
+                  }
+
                   const deadlineDate = readValue("deadlineDate");
-                  if (
-                    deadlineDate &&
-                    (!/^\d{4}-\d{2}-\d{2}$/.test(deadlineDate) ||
-                      Number.isNaN(Date.parse(`${deadlineDate}T00:00:00Z`)) ||
-                      !new Date(`${deadlineDate}T00:00:00Z`)
-                        .toISOString()
-                        .startsWith(deadlineDate))
-                  ) {
+                  const normalizedDeadlineDate = normalizeTargetDate(deadlineDate);
+                  if (normalizedDeadlineDate === null) {
                     nextErrors.deadlineDate = t.contact.validation.invalidDate;
                   }
 
@@ -1171,7 +1188,10 @@ function Contact() {
                     const response = await fetch(`${apiBaseUrl}/contact`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(Object.fromEntries(formData)),
+                      body: JSON.stringify({
+                        ...Object.fromEntries(formData),
+                        deadlineDate: normalizedDeadlineDate,
+                      }),
                     });
                     if (response.ok) {
                       setSent(true);
@@ -1233,7 +1253,6 @@ function Contact() {
                 <label data-contact-field="project">
                   <span>{t.contact.project}</span>
                   <input
-                    required
                     name="project"
                     maxLength={160}
                     placeholder={t.contact.projectPlaceholder}
@@ -1253,7 +1272,6 @@ function Contact() {
                   <label data-contact-field="clientType">
                     <span>{t.contact.clientType}</span>
                     <Select
-                      required
                       open={openSelect === "clientType"}
                       onOpenChange={(open) =>
                         setOpenSelect(open ? "clientType" : null)
@@ -1312,7 +1330,6 @@ function Contact() {
                   <label data-contact-field="service">
                     <span>{t.contact.service}</span>
                     <Select
-                      required
                       open={openSelect === "service"}
                       onOpenChange={(open) =>
                         setOpenSelect(open ? "service" : null)
@@ -1379,7 +1396,6 @@ function Contact() {
                   <label data-contact-field="budget">
                     <span>{t.contact.budget}</span>
                     <Select
-                      required
                       open={openSelect === "budget"}
                       onOpenChange={(open) =>
                         setOpenSelect(open ? "budget" : null)
@@ -1444,7 +1460,6 @@ function Contact() {
                   <label data-contact-field="deadline">
                     <span>{t.contact.deadline}</span>
                     <Select
-                      required
                       open={openSelect === "deadline"}
                       onOpenChange={(open) =>
                         setOpenSelect(open ? "deadline" : null)
@@ -1504,8 +1519,11 @@ function Contact() {
                 <label data-contact-field="deadlineDate">
                   <span>{t.contact.deadlineDate}</span>
                   <input
-                    type="date"
+                    type="text"
                     name="deadlineDate"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="DD/MM/YYYY"
                     aria-invalid={Boolean(fieldErrors.deadlineDate)}
                     aria-describedby={
                       fieldErrors.deadlineDate
@@ -1543,7 +1561,6 @@ function Contact() {
                 <label data-contact-field="message">
                   <span>{t.contact.message}</span>
                   <textarea
-                    required
                     name="message"
                     rows={4}
                     maxLength={5000}
