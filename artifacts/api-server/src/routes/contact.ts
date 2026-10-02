@@ -129,6 +129,7 @@ router.post("/contact", async (req, res) => {
     typeof deadlineDate === "string" ? sanitizeSingleLine(deadlineDate) : "";
   const cleanReference =
     typeof reference === "string" ? sanitizeSingleLine(reference) : "";
+  const today = new Date().toISOString().slice(0, 10);
   let validReference = !cleanReference;
   if (cleanReference) {
     try {
@@ -141,6 +142,7 @@ router.post("/contact", async (req, res) => {
   const validDeadlineDate =
     !cleanDeadlineDate ||
     (/^\d{4}-\d{2}-\d{2}$/.test(cleanDeadlineDate) &&
+      cleanDeadlineDate > today &&
       !Number.isNaN(Date.parse(`${cleanDeadlineDate}T00:00:00Z`)) &&
       new Date(`${cleanDeadlineDate}T00:00:00Z`)
         .toISOString()

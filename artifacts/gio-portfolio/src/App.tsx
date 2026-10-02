@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { enUS, ja, pt } from "date-fns/locale";
 import {
   motion,
   useReducedMotion,
@@ -18,6 +19,7 @@ import {
   ArrowLeft,
   ArrowUp,
   ArrowUpRight,
+  CalendarDays,
   Mail,
   Menu,
   Moon,
@@ -42,6 +44,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -143,6 +151,39 @@ function normalizeTargetDate(value: string) {
   }
 
   return `${yearText}-${monthText}-${dayText}`;
+}
+
+function isFutureTargetDate(value: string) {
+  const today = new Date();
+  const todayText = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return value > todayText;
+}
+
+function getTomorrowDate() {
+  const tomorrow = new Date();
+  tomorrow.setHours(0, 0, 0, 0);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
+}
+
+function parseTargetDate(value: string) {
+  const normalized = normalizeTargetDate(value);
+  if (!normalized) return undefined;
+  const [year, month, day] = normalized.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatTargetDate(date: Date) {
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+function formatTargetDateInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length < 2) return digits;
+  if (digits.length === 2) return `${digits}/`;
+  if (digits.length < 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  if (digits.length === 4) return `${digits.slice(0, 2)}/${digits.slice(2)}/`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 function PageTransition({ active }: { active: boolean }) {
@@ -1028,7 +1069,18 @@ function Contact() {
   const [error, setError] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({});
   const [openSelect, setOpenSelect] = useState<ContactField | null>(null);
-  const { t } = useLanguage();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [deadlineDateValue, setDeadlineDateValue] = useState("");
+  const calendarAnchorRef = useRef<HTMLDivElement>(null);
+  const { language, t } = useLanguage();
+  const selectedDeadlineDate = parseTargetDate(deadlineDateValue);
+  const firstSelectableDate = getTomorrowDate();
+  const calendarLocale = language === "pt" ? pt : language === "jp" ? ja : enUS;
+  const calendarMonth =
+    selectedDeadlineDate &&
+    isFutureTargetDate(formatTargetDate(selectedDeadlineDate))
+      ? selectedDeadlineDate
+      : firstSelectableDate;
   const clearFieldError = (field: ContactField) => {
     setFieldErrors((current) => {
       if (!current[field]) return current;
@@ -1146,6 +1198,11 @@ function Contact() {
                   const normalizedDeadlineDate = normalizeTargetDate(deadlineDate);
                   if (normalizedDeadlineDate === null) {
                     nextErrors.deadlineDate = t.contact.validation.invalidDate;
+                  } else if (
+                    normalizedDeadlineDate &&
+                    !isFutureTargetDate(normalizedDeadlineDate)
+                  ) {
+                    nextErrors.deadlineDate = t.contact.validation.futureDate;
                   }
 
                   const reference = readValue("reference");
@@ -1518,20 +1575,130 @@ function Contact() {
                 </div>
                 <label data-contact-field="deadlineDate">
                   <span>{t.contact.deadlineDate}</span>
-                  <input
-                    type="text"
-                    name="deadlineDate"
-                    inputMode="numeric"
-                    maxLength={10}
-                    placeholder="DD/MM/YYYY"
-                    aria-invalid={Boolean(fieldErrors.deadlineDate)}
-                    aria-describedby={
-                      fieldErrors.deadlineDate
-                        ? "contact-error-deadlineDate"
-                        : undefined
-                    }
-                    onChange={() => clearFieldError("deadlineDate")}
-                  />
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <div
+                      ref={calendarAnchorRef}
+                      className="contact-date-control"
+                    >
+                      <PopoverAnchor asChild>
+                        <input
+                          type="text"
+                          name="deadlineDate"
+                          inputMode="numeric"
+                          maxLength={10}
+                          placeholder="DD/MM/YYYY"
+                          value={deadlineDateValue}
+                          aria-haspopup="dialog"
+                          aria-expanded={calendarOpen}
+                          aria-invalid={Boolean(fieldErrors.deadlineDate)}
+                          aria-describedby={
+                            fieldErrors.deadlineDate
+                              ? "contact-error-deadlineDate"
+                              : undefined
+                          }
+                          onFocus={() => setCalendarOpen(true)}
+                          onClick={() => setCalendarOpen(true)}
+                          onKeyDown={(event) => {
+                            const input = event.currentTarget;
+                            const cursorPosition = input.selectionStart ?? 0;
+                            if (
+                              event.key !== "Backspace" ||
+                              cursorPosition !== input.selectionEnd ||
+                              input.value[cursorPosition - 1] !== "/"
+                            ) {
+                              return;
+                            }
+
+                            event.preventDefault();
+                            const digitsBeforeCursor = input.value
+                              .slice(0, cursorPosition)
+                              .replace(/\D/g, "").length;
+                            const digits = input.value
+                              .replace(/\D/g, "")
+                              .split("");
+                            digits.splice(digitsBeforeCursor - 1, 1);
+                            const formattedValue = formatTargetDateInput(
+                              digits.join(""),
+                            );
+                            input.value = formattedValue;
+                            setDeadlineDateValue(formattedValue);
+                            const nextDigitCount = digitsBeforeCursor - 1;
+                            const nextCursorPosition =
+                              nextDigitCount +
+                              Number(nextDigitCount >= 2) +
+                              Number(nextDigitCount >= 4);
+                            input.setSelectionRange(
+                              nextCursorPosition,
+                              nextCursorPosition,
+                            );
+                            clearFieldError("deadlineDate");
+                          }}
+                          onChange={(event) => {
+                            const input = event.currentTarget;
+                            const digitsBeforeCursor = input.value
+                              .slice(
+                                0,
+                                input.selectionStart ?? input.value.length,
+                              )
+                              .replace(/\D/g, "").length;
+                            const formattedValue = formatTargetDateInput(
+                              input.value,
+                            );
+                            input.value = formattedValue;
+                            setDeadlineDateValue(formattedValue);
+                            const cursorPosition =
+                              digitsBeforeCursor +
+                              Number(digitsBeforeCursor >= 2) +
+                              Number(digitsBeforeCursor >= 4);
+                            input.setSelectionRange(
+                              cursorPosition,
+                              cursorPosition,
+                            );
+                            clearFieldError("deadlineDate");
+                          }}
+                        />
+                      </PopoverAnchor>
+                      <button
+                        type="button"
+                        className="contact-date-button"
+                        aria-label={t.contact.deadlineDate}
+                        onClick={() => setCalendarOpen(true)}
+                      >
+                        <CalendarDays size={17} strokeWidth={1.5} />
+                      </button>
+                    </div>
+                    <PopoverContent
+                      className="contact-date-popover"
+                      align="start"
+                      sideOffset={8}
+                      onOpenAutoFocus={(event) => event.preventDefault()}
+                      onInteractOutside={(event) => {
+                        if (
+                          event.target instanceof Node &&
+                          calendarAnchorRef.current?.contains(event.target)
+                        ) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      <Calendar
+                        mode="single"
+                        locale={calendarLocale}
+                        selected={selectedDeadlineDate}
+                        defaultMonth={calendarMonth}
+                        startMonth={firstSelectableDate}
+                        disabled={{ before: firstSelectableDate }}
+                        className="contact-date-calendar"
+                        onSelect={(date) => {
+                          if (!date) return;
+                          const formattedDate = formatTargetDate(date);
+                          setDeadlineDateValue(formattedDate);
+                          clearFieldError("deadlineDate");
+                          setCalendarOpen(false);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <ContactFieldError
                     field="deadlineDate"
                     message={fieldErrors.deadlineDate}

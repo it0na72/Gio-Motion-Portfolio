@@ -128,6 +128,7 @@ const translations = {
         invalidEmail: "Enter a valid email address.",
         invalidUrl: "Enter a valid link starting with http:// or https://.",
         invalidDate: "Enter a valid date.",
+        futureDate: "Choose a date in the future.",
       },
       sendMessage: "Send message",
       sending: "Sending...",
@@ -302,6 +303,7 @@ const translations = {
         invalidEmail: "Introduz um endereço de email válido.",
         invalidUrl: "Introduz um link válido começado por http:// ou https://.",
         invalidDate: "Introduz uma data válida.",
+        futureDate: "Escolhe uma data futura.",
       },
       sendMessage: "Enviar mensagem",
       sending: "A enviar...",
@@ -478,6 +480,7 @@ const translations = {
         invalidUrl:
           "http:// または https:// で始まる有効なリンクを入力してください。",
         invalidDate: "有効な日付を入力してください。",
+        futureDate: "未来の日付を選択してください。",
       },
       sendMessage: "送信",
       sending: "送信中...",

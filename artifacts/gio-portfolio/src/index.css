@@ -140,10 +140,11 @@ body::after {
   z-index: 31;
   left: 0;
   right: 0;
-  height: 48px;
+  height: 84px;
   pointer-events: none;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
 }
 body::before {
   top: 0;
@@ -1523,6 +1524,113 @@ body::after {
 .contact-select-content .contact-select-item[data-highlighted] {
   background: hsl(var(--muted));
   color: hsl(var(--foreground));
+}
+.contact-date-control {
+  position: relative;
+  margin-top: 11px;
+}
+.contact-form .contact-date-control input {
+  margin-top: 0;
+  padding-right: 42px;
+}
+.contact-form .contact-date-control input:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 4px;
+}
+.contact-date-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--foreground) / 0.58);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.contact-date-button:hover,
+.contact-date-button:focus-visible {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+.contact-date-popover {
+  width: min(22rem, calc(100vw - 32px));
+  padding: 8px;
+  border-radius: 16px;
+  border-color: hsl(var(--foreground) / 0.18);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+  box-shadow: 0 12px 32px hsl(0 0% 0% / 0.16);
+}
+.contact-date-calendar {
+  --cell-size: 2.25rem;
+  width: 100%;
+  color: hsl(var(--foreground));
+}
+.contact-date-calendar .rdp-month_grid,
+.contact-date-calendar .rdp-weekdays,
+.contact-date-calendar .rdp-week {
+  display: block;
+  width: 100%;
+}
+.contact-date-calendar .rdp-month_grid thead,
+.contact-date-calendar .rdp-month_grid tbody {
+  display: block;
+  width: 100%;
+}
+.contact-date-calendar .rdp-weekdays,
+.contact-date-calendar .rdp-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.contact-date-calendar .rdp-weekdays {
+  margin-bottom: 6px;
+}
+.contact-date-calendar .rdp-day,
+.contact-date-calendar .rdp-weekday {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+.contact-date-calendar .rdp-month_caption {
+  font-family: var(--app-font-serif);
+  font-size: 17px;
+}
+.contact-date-calendar .rdp-weekday {
+  color: hsl(var(--foreground) / 0.48);
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+}
+.contact-date-calendar .rdp-day_button {
+  display: grid;
+  width: var(--cell-size);
+  min-width: var(--cell-size);
+  height: var(--cell-size);
+  place-items: center;
+  border-radius: 10px;
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+  font-size: 13px;
+}
+.contact-date-calendar .rdp-day_button:hover:not([aria-disabled="true"]) {
+  background: hsl(var(--muted));
+}
+.contact-date-calendar .rdp-day_button[data-selected-single="true"] {
+  background: hsl(var(--primary));
+  color: hsl(var(--background));
+}
+.contact-date-calendar .rdp-day_button[disabled] {
+  color: hsl(var(--foreground) / 0.25);
+}
+.contact-date-calendar .rdp-outside {
+  visibility: hidden;
 }
 .site-footer {
   background: transparent;
