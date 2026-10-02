@@ -19,11 +19,11 @@ import {
   ArrowLeft,
   ArrowUp,
   ArrowUpRight,
+  Expand,
   CalendarDays,
   Mail,
   Menu,
   Moon,
-  Play,
   Sun,
   Volume2,
   VolumeX,
@@ -37,6 +37,11 @@ import {
   useLocation,
 } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -568,6 +573,13 @@ function MediaVisual({
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(getStoredVolume);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const lastVideoTapRef = useRef(0);
+  const resumePreviewAfterDialogRef = useRef(false);
+  const isCoarsePointer = useRef(
+    typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches,
+  ).current;
   const prefersReducedMotion = useReducedMotion();
   const parallaxX = useMotionValue(0);
   const parallaxY = useMotionValue(0);
@@ -640,6 +652,36 @@ function MediaVisual({
       new CustomEvent<number>("portfolio:video-volume", { detail: nextVolume }),
     );
   };
+  const handlePreviewOpenChange = (open: boolean) => {
+    resetMediaMotion();
+    setPreviewOpen(open);
+    if (open) {
+      resumePreviewAfterDialogRef.current = shouldPlay;
+      setShouldPlay(false);
+      if (videoRef.current) videoRef.current.pause();
+      return;
+    }
+
+    if (resumePreviewAfterDialogRef.current && videoRef.current) {
+      setShouldPlay(true);
+      requestVideoPlayback(videoRef.current);
+    }
+    resumePreviewAfterDialogRef.current = false;
+  };
+  const handleVideoPreviewClick = () => {
+    if (!isCoarsePointer) {
+      toggleAudio();
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastVideoTapRef.current < 400) {
+      lastVideoTapRef.current = 0;
+      handlePreviewOpenChange(true);
+      return;
+    }
+    lastVideoTapRef.current = now;
+  };
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
@@ -649,7 +691,7 @@ function MediaVisual({
       },
       {
         threshold: 0,
-        rootMargin: priority ? "1200px 0px" : "500px 0px",
+        rootMargin: priority ? "2200px 0px" : "1400px 0px",
       },
     );
     loadObserver.observe(frame);
@@ -718,13 +760,17 @@ function MediaVisual({
       data-testid={`media-${project.slug}`}
       initial={{ opacity: 0, scale: 0.96, y: 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      whileHover={{ scale: 1.025, y: -8 }}
+      whileHover={isCoarsePointer ? undefined : { scale: 1.025, y: -8 }}
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-      onMouseMove={handleMediaMove}
-      onMouseEnter={() => {
-        if (!prefersReducedMotion) mediaScale.set(1.045);
-      }}
-      onMouseLeave={resetMediaMotion}
+      onMouseMove={isCoarsePointer ? undefined : handleMediaMove}
+      onMouseEnter={
+        isCoarsePointer
+          ? undefined
+          : () => {
+              if (!prefersReducedMotion) mediaScale.set(1.045);
+            }
+      }
+      onMouseLeave={isCoarsePointer ? undefined : resetMediaMotion}
     >
       {project.videoUrl && shouldLoad ? (
         <>
@@ -740,7 +786,7 @@ function MediaVisual({
             playsInline
             preload={priority ? "auto" : "metadata"}
             onLoadedData={() => setIsVideoReady(true)}
-            onClick={toggleAudio}
+            onClick={handleVideoPreviewClick}
             aria-label={`${project.title} ${t.project.videoPreview}`}
           />
           {!isVideoReady && project.thumbnail && (
@@ -777,9 +823,6 @@ function MediaVisual({
       )}
       {showVideo && project.videoUrl && shouldLoad && (
         <>
-          <span className="play-indicator" aria-hidden="true">
-            <Play size={11} fill="currentColor" strokeWidth={1.2} />
-          </span>
           {!isMuted && (
             <input
               type="range"
@@ -803,8 +846,48 @@ function MediaVisual({
               toggleAudio();
             }}
           >
-            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            {isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
           </button>
+          <button
+            type="button"
+            className="media-expand-button"
+            aria-label={t.media.openVideo}
+            title={t.media.openVideo}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePreviewOpenChange(true);
+            }}
+          >
+            <Expand size={12} strokeWidth={1.7} />
+          </button>
+          <Dialog open={previewOpen} onOpenChange={handlePreviewOpenChange}>
+            <DialogContent className="media-preview-dialog">
+              <DialogTitle className="media-preview-dialog-accessible-title">
+                {t.project.videoPreview}
+              </DialogTitle>
+              <motion.video
+                className="media-preview-dialog-video"
+                src={project.videoUrl}
+                poster={project.thumbnail || undefined}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, scale: 0.97, y: 12 }
+                }
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0 : 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                autoPlay
+                controls
+                loop
+                playsInline
+                muted={isMuted}
+                preload="auto"
+              />
+            </DialogContent>
+          </Dialog>
         </>
       )}
       {project.placeholder && (

@@ -160,6 +160,7 @@ const translations = {
     media: {
       placeholder: "MEDIA PLACEHOLDER",
       placeholderBadge: "Placeholder",
+      openVideo: "Open video larger",
     },
     projectRoles: { motion: "Motion design", editing: "Video editing" },
     projectDescriptions: {
@@ -335,6 +336,7 @@ const translations = {
     media: {
       placeholder: "MEDIA DE EXEMPLO",
       placeholderBadge: "Exemplo",
+      openVideo: "Ampliar vídeo",
     },
     projectRoles: { motion: "Motion design", editing: "Edição de vídeo" },
     projectDescriptions: {
@@ -513,6 +515,7 @@ const translations = {
     media: {
       placeholder: "メディアプレースホルダー",
       placeholderBadge: "プレースホルダー",
+      openVideo: "動画を拡大",
     },
     projectRoles: { motion: "モーションデザイン", editing: "映像編集" },
     projectDescriptions: {

@@ -166,6 +166,46 @@ body::after {
   mask-image: linear-gradient(to top, #000 0%, transparent 100%);
   -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%);
 }
+@supports (padding: env(safe-area-inset-top)) {
+  body::before {
+    height: calc(84px + env(safe-area-inset-top, 0px));
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 env(safe-area-inset-top, 0px),
+      transparent calc(env(safe-area-inset-top, 0px) + 84px)
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 env(safe-area-inset-top, 0px),
+      transparent calc(env(safe-area-inset-top, 0px) + 84px)
+    );
+  }
+  body::after {
+    height: calc(84px + env(safe-area-inset-bottom, 0px));
+    mask-image: linear-gradient(
+      to top,
+      #000 0,
+      #000 env(safe-area-inset-bottom, 0px),
+      transparent calc(env(safe-area-inset-bottom, 0px) + 84px)
+    );
+    -webkit-mask-image: linear-gradient(
+      to top,
+      #000 0,
+      #000 env(safe-area-inset-bottom, 0px),
+      transparent calc(env(safe-area-inset-bottom, 0px) + 84px)
+    );
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  @supports (-webkit-touch-callout: none) {
+    body::before,
+    body::after {
+      display: none;
+    }
+  }
+}
 .site-shell::after {
   content: "";
   position: fixed;
@@ -659,21 +699,6 @@ body::after {
   color: hsl(var(--foreground));
   background: hsl(var(--background) / 0.88);
 }
-.play-indicator {
-  position: absolute;
-  z-index: 2;
-  right: 15px;
-  bottom: 15px;
-  display: flex;
-  width: 31px;
-  height: 31px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid hsl(var(--background) / 0.7);
-  border-radius: 50%;
-  color: hsl(var(--background));
-  opacity: 0.9;
-}
 .data-saver-play {
   position: absolute;
   z-index: 3;
@@ -697,32 +722,132 @@ body::after {
 .sound-toggle {
   position: absolute;
   z-index: 3;
-  right: 54px;
-  bottom: 15px;
+  right: 12px;
+  bottom: 12px;
   display: flex;
-  width: 38px;
-  height: 38px;
+  width: 28px;
+  height: 28px;
   align-items: center;
   justify-content: center;
-  border: 1px solid hsl(var(--background) / 0.7);
+  border: 1px solid hsl(var(--background) / 0.55);
   border-radius: 50%;
   color: hsl(var(--background));
-  background: hsl(var(--foreground) / 0.24);
+  background: hsl(var(--foreground) / 0.16);
+  opacity: 0.74;
   cursor: pointer;
   transition:
     background 180ms ease,
+    opacity 180ms ease,
     transform 180ms ease;
 }
 .sound-toggle:hover {
   background: hsl(var(--foreground) / 0.58);
+  opacity: 1;
   transform: translateY(-2px);
+}
+.media-expand-button {
+  display: none;
+}
+@media (max-width: 767px) and (hover: none) and (pointer: coarse) {
+  .media-expand-button {
+    position: absolute;
+    z-index: 3;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid hsl(var(--background) / 0.55);
+    border-radius: 50%;
+    background: hsl(var(--foreground) / 0.18);
+    color: hsl(var(--background));
+    opacity: 0.74;
+    transition:
+      background 180ms ease,
+      opacity 180ms ease;
+    cursor: pointer;
+  }
+  .media-expand-button:hover,
+  .media-expand-button:focus-visible {
+    background: hsl(var(--foreground) / 0.48);
+    opacity: 1;
+  }
+}
+.media-preview-overlay {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: hsl(0 0% 0% / 0.72);
+}
+.media-preview-dialog {
+  position: fixed;
+  z-index: 51;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(92vw, 900px);
+  max-width: none;
+  max-height: 88dvh;
+  transform: translate(-50%, -50%);
+  gap: 14px;
+  overflow: visible;
+  padding: 32px 18px;
+  border: 1px solid hsl(var(--foreground) / 0.18);
+  border-radius: 22px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.media-preview-dialog > button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: hsl(var(--foreground) / 0.08);
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+.media-preview-dialog > button > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.media-preview-dialog > button > svg {
+  width: 11px;
+  height: 11px;
+}
+.media-preview-dialog-accessible-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.media-preview-dialog-video {
+  display: block;
+  width: 100%;
+  max-height: calc(88dvh - 68px);
+  border-radius: 12px;
+  background: #000;
+  object-fit: contain;
 }
 .volume-slider {
   position: absolute;
   z-index: 3;
-  right: 94px;
-  bottom: 31px;
-  width: 70px;
+  right: 52px;
+  bottom: 26px;
+  width: 60px;
   height: 4px;
   appearance: none;
   -webkit-appearance: none;
@@ -1167,6 +1292,7 @@ body::after {
 }
 .site-footer {
   padding: 25px 0 30px;
+  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid hsl(var(--foreground) / 0.15);
 }
 .footer-inner {
@@ -1673,6 +1799,7 @@ body::after {
   }
   .site-header {
     padding: 18px 0;
+    padding-top: calc(18px + env(safe-area-inset-top, 0px));
   }
   .header-actions {
     gap: 18px;
@@ -1740,11 +1867,12 @@ body::after {
     gap: 17px;
   }
   .work-grid {
-    columns: 2;
-    column-gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
   .project-card-wrap {
-    margin: 0 0 14px;
+    margin: 0;
   }
   .media-frame {
     /* forces every card to the same shape so mixed 4:3/16:9/9:16 clips still line up in the 2-col grid */
