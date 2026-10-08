@@ -138,6 +138,7 @@ const translations = {
       role: "VIDEO EDITOR / MOTION DESIGNER",
       email: "Email",
       backToTop: "Back to top",
+      rights: "All rights reserved.",
     },
     project: {
       notes: "Project notes",
@@ -314,6 +315,7 @@ const translations = {
       role: "EDITOR DE VÍDEO / motion designer",
       email: "Email",
       backToTop: "Voltar ao topo",
+      rights: "Todos os direitos reservados.",
     },
     project: {
       notes: "Notas do projeto",
@@ -453,13 +455,13 @@ const translations = {
         socialContent: "SNSコンテンツ",
         ongoing: "継続的なクリエイティブサポート",
       },
-      budget: "ご予算の目安 (EUR)",
+      budget: "ご予算の目安 (JPY)",
       budgets: {
-        under500: "500ユーロ未満",
-        from500To1000: "500–1,000ユーロ",
-        from1000To2500: "1,000–2,500ユーロ",
-        from2500To5000: "2,500–5,000ユーロ",
-        over5000: "5,000ユーロ以上",
+        under500: "¥80,000未満",
+        from500To1000: "¥80,000–¥160,000",
+        from1000To2500: "¥160,000–¥400,000",
+        from2500To5000: "¥400,000–¥800,000",
+        over5000: "¥800,000以上",
       },
       deadline: "ご希望の納期",
       deadlines: {
@@ -492,6 +494,7 @@ const translations = {
       role: "映像編集 / モーションデザイン",
       email: "メール",
       backToTop: "ページ上部へ戻る",
+      rights: "All rights reserved.（全著作権所有）",
     },
     project: {
       notes: "プロジェクトノート",
