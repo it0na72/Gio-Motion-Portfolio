@@ -295,10 +295,12 @@ function Header() {
   return (
     <header className="site-header" data-testid="site-header">
       <div className="header-inner">
-        <Link href="/" className="wordmark" data-testid="link-home">
-          <ArrowLeft size={14} strokeWidth={1.8} aria-hidden="true" />
-          {t.nav.home}
-        </Link>
+        {location !== "/" && (
+          <Link href="/" className="wordmark" data-testid="link-home">
+            <ArrowLeft size={14} strokeWidth={1.8} aria-hidden="true" />
+            {t.nav.home}
+          </Link>
+        )}
         <div className="header-actions">
           <nav className="desktop-nav" aria-label={t.navigation.primary}>
             {links.map((link) => (
@@ -407,7 +409,7 @@ function Footer() {
             <ArrowUp size={13} strokeWidth={1.4} />
             {t.footer.backToTop}
           </button>
-          <span>© Gio</span>
+          <span>© Gio. {t.footer.rights}</span>
         </div>
       </div>
     </footer>
@@ -691,7 +693,7 @@ function MediaVisual({
       },
       {
         threshold: 0,
-        rootMargin: priority ? "2200px 0px" : "1400px 0px",
+        rootMargin: priority ? "4000px 0px" : "3500px 0px",
       },
     );
     loadObserver.observe(frame);
@@ -784,7 +786,7 @@ function MediaVisual({
             autoPlay={shouldPlay && !prefersReducedMotion}
             loop
             playsInline
-            preload={priority ? "auto" : "metadata"}
+            preload="auto"
             onLoadedData={() => setIsVideoReady(true)}
             onClick={handleVideoPreviewClick}
             aria-label={`${project.title} ${t.project.videoPreview}`}
@@ -805,7 +807,7 @@ function MediaVisual({
           className="media-content video-poster"
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
-          loading={priority ? "eager" : "lazy"}
+          loading="eager"
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
         />
@@ -815,7 +817,7 @@ function MediaVisual({
           style={{ x: smoothX, y: smoothY, scale: smoothScale }}
           src={project.thumbnail}
           alt={`${project.title} ${t.project.thumbnail}`}
-          loading="lazy"
+          loading="eager"
           decoding="async"
         />
       ) : (
