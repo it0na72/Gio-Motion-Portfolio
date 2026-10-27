@@ -963,6 +963,7 @@ function ProjectDetailDialog({ project }: { project: Project }) {
   return (
     <DialogContent
       className="project-detail-dialog"
+      unstyled
       closeLabel={t.project.close}
       overlayClassName="project-detail-overlay"
     >
