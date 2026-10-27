@@ -796,6 +796,17 @@ body::after {
   transform: translate(-50%, -50%);
   animation: project-window-enter 420ms var(--ease-editorial) both;
 }
+/* higher specificity so the shared dialog's tailwind animate classes can't drop the centering */
+.project-detail-dialog.project-detail-dialog[data-state] {
+  top: 50% !important;
+  left: 50% !important;
+  translate: none !important;
+  transform: translate(-50%, -50%) !important;
+  animation: project-window-fade 360ms var(--ease-editorial) both !important;
+}
+.project-detail-dialog.project-detail-dialog[data-state="closed"] {
+  animation: none !important;
+}
 .project-window-bar {
   position: relative;
   z-index: 1;
@@ -906,6 +917,21 @@ body::after {
   background: hsl(var(--background) / 0.94);
   font-size: 12px;
 }
+.project-detail-media::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  background: linear-gradient(
+    to right,
+    hsl(var(--secondary) / 0),
+    hsl(var(--background))
+  );
+  pointer-events: none;
+}
 .project-detail-info {
   min-width: 0;
   overflow-y: auto;
@@ -957,6 +983,14 @@ body::after {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
+}
+@keyframes project-window-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes project-window-enter {
   from {
@@ -1909,12 +1943,29 @@ body::after {
   color: hsl(var(--foreground));
   transform: translateY(-2px);
 }
-.site-shell.is-scrolled .site-header {
-  padding: 14px 0;
-  background: hsl(var(--background) / 0.55);
+.site-header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 -28px;
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--background) / 0.7),
+    hsl(var(--background) / 0)
+  );
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
-  border-bottom: 1px solid hsl(var(--foreground) / 0.08);
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 380ms ease;
+}
+.site-shell.is-scrolled .site-header::before {
+  opacity: 1;
+}
+.site-shell.is-scrolled .site-header {
+  padding: 14px 0;
   transition:
     padding 380ms var(--ease-editorial),
     background-color 380ms ease;
@@ -2191,6 +2242,17 @@ body::after {
   .project-detail-layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+  .project-detail-media::after {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 40px;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--secondary) / 0),
+      hsl(var(--background))
+    );
   }
   .project-detail-media {
     min-height: 0;

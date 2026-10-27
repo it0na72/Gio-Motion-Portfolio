@@ -667,7 +667,7 @@ function MediaVisual({
       },
       {
         threshold: 0,
-        rootMargin: priority ? "4000px 0px" : "3500px 0px",
+        rootMargin: priority ? "1500px 0px" : "1000px 0px",
       },
     );
     loadObserver.observe(frame);
@@ -1028,7 +1028,15 @@ function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
   const displayedProjects = limit
     ? visibleProjects.slice(0, limit)
     : visibleProjects;
-  const orderedProjects = buildMosaicOrder(displayedProjects);
+  // motion design first, then video editing; each group is mixed on its own
+  const orderedProjects = [
+    ...buildMosaicOrder(
+      displayedProjects.filter((p) => p.category === "MOTION DESIGN"),
+    ),
+    ...buildMosaicOrder(
+      displayedProjects.filter((p) => p.category !== "MOTION DESIGN"),
+    ),
+  ];
   return (
     <Dialog
       open={dialogOpen}
