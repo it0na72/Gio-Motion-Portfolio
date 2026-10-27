@@ -142,8 +142,8 @@ body::after {
   right: 0;
   height: 84px;
   pointer-events: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   transform: translateZ(0);
 }
 body::before {
@@ -773,16 +773,26 @@ body::after {
   -webkit-backdrop-filter: blur(12px);
 }
 .project-detail-dialog {
+  --dialog-gutter: 24px;
+  /* symmetric margins that never fall below the device safe area */
+  --dialog-gap-x: max(
+    var(--dialog-gutter),
+    env(safe-area-inset-left),
+    env(safe-area-inset-right)
+  );
+  --dialog-gap-y: max(
+    var(--dialog-gutter),
+    env(safe-area-inset-top),
+    env(safe-area-inset-bottom)
+  );
   position: fixed;
   z-index: 51;
-  inset: auto;
-  top: 50%;
-  left: 50%;
+  /* fill the viewport box, then let auto margins centre the sized dialog */
+  inset: 0;
+  margin: auto;
   display: flex;
-  width: min(1120px, calc(100vw - 48px));
-  height: min(760px, calc(100dvh - 48px));
-  max-width: none;
-  max-height: none;
+  width: min(1120px, calc(100% - 2 * var(--dialog-gap-x)));
+  height: min(760px, calc(100% - 2 * var(--dialog-gap-y)));
   flex-direction: column;
   gap: 0;
   overflow: hidden;
@@ -792,20 +802,9 @@ body::after {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   box-shadow: 0 32px 100px hsl(0 0% 0% / 0.38);
-  translate: none;
-  transform: translate(-50%, -50%);
+}
+.project-detail-dialog[data-state="open"] {
   animation: project-window-enter 420ms var(--ease-editorial) both;
-}
-/* higher specificity so the shared dialog's tailwind animate classes can't drop the centering */
-.project-detail-dialog.project-detail-dialog[data-state] {
-  top: 50% !important;
-  left: 50% !important;
-  translate: none !important;
-  transform: translate(-50%, -50%) !important;
-  animation: project-window-fade 360ms var(--ease-editorial) both !important;
-}
-.project-detail-dialog.project-detail-dialog[data-state="closed"] {
-  animation: none !important;
 }
 .project-window-bar {
   position: relative;
@@ -995,11 +994,11 @@ body::after {
 @keyframes project-window-enter {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 16px)) scale(0.985);
+    transform: translateY(16px) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: none;
   }
 }
 .volume-slider {
@@ -1953,8 +1952,8 @@ body::after {
     hsl(var(--background) / 0.7),
     hsl(var(--background) / 0)
   );
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  backdrop-filter: blur(6px) saturate(1.1);
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
   opacity: 0;
@@ -2223,8 +2222,7 @@ body::after {
 
 @media (max-width: 767px) {
   .project-detail-dialog {
-    width: calc(100vw - 24px);
-    height: calc(100dvh - 24px);
+    --dialog-gutter: 12px;
     border-radius: 16px;
   }
   .project-window-bar {
@@ -2285,8 +2283,7 @@ body::after {
 
 @media (max-width: 360px) {
   .project-detail-dialog {
-    width: calc(100vw - 16px);
-    height: calc(100dvh - 16px);
+    --dialog-gutter: 8px;
   }
   .project-detail-info {
     padding-inline: 18px;
