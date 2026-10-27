@@ -747,35 +747,16 @@ body::after {
   opacity: 1;
   transform: translateY(-2px);
 }
-.media-expand-button {
-  display: none;
-}
-@media (max-width: 767px) and (hover: none) and (pointer: coarse) {
-  .media-expand-button {
-    position: absolute;
-    z-index: 3;
-    top: 12px;
-    right: 12px;
-    display: grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    padding: 0;
-    border: 1px solid hsl(var(--background) / 0.55);
-    border-radius: 50%;
-    background: hsl(var(--foreground) / 0.18);
-    color: hsl(var(--background));
-    opacity: 0.74;
-    transition:
-      background 180ms ease,
-      opacity 180ms ease;
-    cursor: pointer;
-  }
-  .media-expand-button:hover,
-  .media-expand-button:focus-visible {
-    background: hsl(var(--foreground) / 0.48);
-    opacity: 1;
-  }
+.project-detail-trigger {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 .media-preview-overlay {
   position: fixed;
@@ -783,73 +764,209 @@ body::after {
   inset: 0;
   background: hsl(0 0% 0% / 0.72);
 }
-.media-preview-dialog {
+.project-detail-overlay {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: hsl(var(--foreground) / 0.58);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.project-detail-dialog {
   position: fixed;
   z-index: 51;
   inset: auto;
   top: 50%;
   left: 50%;
-  margin: 0;
-  display: grid;
-  width: max-content;
-  height: max-content;
-  max-width: min(calc(100vw - 24px), 900px);
-  max-height: calc(100dvh - 24px);
-  translate: -50% -50%;
-  transform: none;
-  animation: none;
-  gap: 14px;
-  overflow-y: auto;
-  padding: 32px 18px;
-  border: 1px solid hsl(var(--foreground) / 0.18);
-  border-radius: 22px;
+  display: flex;
+  width: min(1120px, calc(100vw - 48px));
+  height: min(760px, calc(100dvh - 48px));
+  max-width: none;
+  max-height: none;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid hsl(var(--foreground) / 0.16);
+  border-radius: 20px;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  box-shadow: 0 32px 100px hsl(0 0% 0% / 0.38);
+  translate: none;
+  transform: translate(-50%, -50%);
+  animation: project-window-enter 420ms var(--ease-editorial) both;
 }
-.media-preview-dialog > button {
+.project-window-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 52px;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid hsl(var(--foreground) / 0.1);
+  background: hsl(var(--card) / 0.86);
+}
+.project-window-control {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 20px;
+  width: 12px;
+  height: 12px;
+  border: 1px solid hsl(0 0% 0% / 0.1);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.project-window-control.is-yellow {
+  left: 40px;
+  background: #f5bf4f;
+}
+.project-window-control.is-green {
+  left: 60px;
+  background: #61c554;
+}
+.project-window-caption {
+  max-width: calc(100% - 150px);
+  overflow: hidden;
+  color: hsl(var(--foreground) / 0.52);
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-detail-dialog > button {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  right: auto;
+  left: 18px;
   display: grid;
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   place-items: center;
   padding: 0;
-  border: 0;
+  border: 1px solid hsl(0 0% 0% / 0.1);
   border-radius: 50%;
-  background: hsl(var(--foreground) / 0.08);
-  color: hsl(var(--foreground));
+  background: #ff605c;
+  color: #74201e;
+  opacity: 1;
   cursor: pointer;
 }
-.media-preview-dialog > button > span {
+.project-detail-dialog > button:hover {
+  background: #ff4d49;
+}
+.project-detail-dialog > button > svg {
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+}
+.project-detail-dialog > button:hover > svg,
+.project-detail-dialog > button:focus-visible > svg {
+  opacity: 1;
+}
+.project-detail-dialog > button > span {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-.media-preview-dialog > button > svg {
-  width: 11px;
-  height: 11px;
+.project-detail-layout {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.85fr);
 }
-.media-preview-dialog-accessible-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
+.project-detail-media {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  padding: 24px;
+  background: hsl(var(--secondary));
 }
-.media-preview-dialog-video {
+.project-detail-video {
   display: block;
-  width: auto;
+  width: 100%;
   height: auto;
-  max-width: 100%;
-  max-height: calc(100dvh - 120px);
-  border-radius: 12px;
+  max-height: calc(100dvh - 130px);
+  border-radius: 10px;
   background: #000;
   object-fit: contain;
+}
+.project-video-error {
+  position: absolute;
+  inset: auto 16px 16px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background) / 0.94);
+  font-size: 12px;
+}
+.project-detail-info {
+  min-width: 0;
+  overflow-y: auto;
+  padding: clamp(26px, 4vw, 48px) clamp(22px, 3vw, 38px);
+  overscroll-behavior: contain;
+}
+.project-detail-category {
+  margin: 0 0 20px;
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.project-detail-title {
+  margin: 0;
+  font-family: var(--app-font-serif);
+  font-size: clamp(2.2rem, 3.2vw, 3.2rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+}
+.project-detail-description {
+  margin: 26px 0 0;
+  color: hsl(var(--foreground) / 0.72);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.project-detail-metadata {
+  display: grid;
+  gap: 16px;
+  margin: 30px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid hsl(var(--foreground) / 0.14);
+}
+.project-detail-metadata > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 12px;
+}
+.project-detail-metadata dt {
+  color: hsl(var(--foreground) / 0.48);
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.project-detail-metadata dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@keyframes project-window-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 16px)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 .volume-slider {
   position: absolute;
@@ -2050,5 +2167,69 @@ body::after {
   }
   .magnetic-link-wrap {
     transform: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .project-detail-dialog {
+    width: calc(100vw - 24px);
+    height: calc(100dvh - 24px);
+    border-radius: 16px;
+  }
+  .project-window-bar {
+    min-height: 48px;
+    flex-basis: 48px;
+  }
+  .project-window-control,
+  .project-detail-dialog > button {
+    top: 18px;
+  }
+  .project-window-caption {
+    max-width: calc(100% - 112px);
+    font-size: 9px;
+  }
+  .project-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+  .project-detail-media {
+    min-height: 0;
+    max-height: 36dvh;
+    padding: 14px;
+  }
+  .project-detail-video {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(36dvh - 28px);
+  }
+  .project-detail-info {
+    padding: 24px 22px 30px;
+  }
+  .project-detail-category {
+    margin-bottom: 12px;
+  }
+  .project-detail-title {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+  .project-detail-description {
+    margin-top: 18px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .project-detail-metadata {
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .project-detail-dialog {
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+  }
+  .project-detail-info {
+    padding-inline: 18px;
+  }
+  .project-detail-metadata > div {
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 }
