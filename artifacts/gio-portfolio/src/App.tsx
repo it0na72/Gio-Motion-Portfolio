@@ -19,7 +19,6 @@ import {
   ArrowLeft,
   ArrowUp,
   ArrowUpRight,
-  Expand,
   CalendarDays,
   Mail,
   Menu,
@@ -40,6 +39,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import {
   Dialog,
   DialogContent,
+  DialogTrigger,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -563,10 +563,14 @@ function MediaVisual({
   project,
   showVideo = false,
   priority = false,
+  isPaused = false,
+  onOpen,
 }: {
   project: Project;
   showVideo?: boolean;
   priority?: boolean;
+  isPaused?: boolean;
+  onOpen: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaFrameRef = useRef<HTMLDivElement>(null);
@@ -575,9 +579,6 @@ function MediaVisual({
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(getStoredVolume);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const lastVideoTapRef = useRef(0);
-  const resumePreviewAfterDialogRef = useRef(false);
   const isCoarsePointer = useRef(
     typeof window !== "undefined" &&
       window.matchMedia("(pointer: coarse)").matches,
@@ -614,6 +615,9 @@ function MediaVisual({
     mass: 0.45,
   });
   const { t } = useLanguage();
+  const projectTitle =
+    t.projectTitles[project.slug as keyof typeof t.projectTitles] ??
+    project.title;
   const handleMediaMove = (event: MouseEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
@@ -654,36 +658,6 @@ function MediaVisual({
       new CustomEvent<number>("portfolio:video-volume", { detail: nextVolume }),
     );
   };
-  const handlePreviewOpenChange = (open: boolean) => {
-    resetMediaMotion();
-    setPreviewOpen(open);
-    if (open) {
-      resumePreviewAfterDialogRef.current = shouldPlay;
-      setShouldPlay(false);
-      if (videoRef.current) videoRef.current.pause();
-      return;
-    }
-
-    if (resumePreviewAfterDialogRef.current && videoRef.current) {
-      setShouldPlay(true);
-      requestVideoPlayback(videoRef.current);
-    }
-    resumePreviewAfterDialogRef.current = false;
-  };
-  const handleVideoPreviewClick = () => {
-    if (!isCoarsePointer) {
-      toggleAudio();
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastVideoTapRef.current < 400) {
-      lastVideoTapRef.current = 0;
-      handlePreviewOpenChange(true);
-      return;
-    }
-    lastVideoTapRef.current = now;
-  };
   useEffect(() => {
     const frame = mediaFrameRef.current;
     if (!frame || !project.videoUrl) return;
@@ -706,8 +680,10 @@ function MediaVisual({
       ([entry]) => {
         const shouldPlayVideo =
           entry.isIntersecting && entry.intersectionRatio >= 0.3;
-        setShouldPlay(shouldPlayVideo && !prefersReducedMotion);
-        if (shouldPlayVideo && !prefersReducedMotion) {
+        const shouldStartVideo =
+          shouldPlayVideo && !prefersReducedMotion && !isPaused;
+        setShouldPlay(shouldStartVideo);
+        if (shouldStartVideo) {
           if (videoRef.current) {
             requestVideoPlayback(videoRef.current);
           }
@@ -722,7 +698,13 @@ function MediaVisual({
       playObserver.disconnect();
       if (videoRef.current) releaseVideoPlayback(videoRef.current);
     };
-  }, [project.videoUrl, prefersReducedMotion]);
+  }, [project.videoUrl, prefersReducedMotion, isPaused]);
+  useEffect(() => {
+    if (isPaused && videoRef.current) {
+      setShouldPlay(false);
+      releaseVideoPlayback(videoRef.current);
+    }
+  }, [isPaused]);
   useEffect(() => {
     const handleOtherVideoAudio = (event: Event) => {
       const activeVideo = (event as CustomEvent<HTMLVideoElement>).detail;
@@ -788,14 +770,13 @@ function MediaVisual({
             playsInline
             preload="auto"
             onLoadedData={() => setIsVideoReady(true)}
-            onClick={handleVideoPreviewClick}
-            aria-label={`${project.title} ${t.project.videoPreview}`}
+            aria-label={`${projectTitle} ${t.project.videoPreview}`}
           />
           {!isVideoReady && project.thumbnail && (
             <motion.img
               className="media-content video-poster is-buffering"
               src={project.thumbnail}
-              alt={`${project.title} ${t.project.thumbnail}`}
+              alt={`${projectTitle} ${t.project.thumbnail}`}
               decoding="async"
               fetchPriority={priority ? "high" : "auto"}
               aria-hidden="true"
@@ -806,7 +787,7 @@ function MediaVisual({
         <motion.img
           className="media-content video-poster"
           src={project.thumbnail}
-          alt={`${project.title} ${t.project.thumbnail}`}
+          alt={`${projectTitle} ${t.project.thumbnail}`}
           loading="eager"
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
@@ -816,13 +797,23 @@ function MediaVisual({
           className="media-content"
           style={{ x: smoothX, y: smoothY, scale: smoothScale }}
           src={project.thumbnail}
-          alt={`${project.title} ${t.project.thumbnail}`}
+          alt={`${projectTitle} ${t.project.thumbnail}`}
           loading="eager"
           decoding="async"
         />
       ) : (
         <PlaceholderVisual project={project} />
       )}
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="project-detail-trigger"
+          aria-label={`${projectTitle}: ${t.project.openDetails}`}
+          onClick={onOpen}
+        >
+          <span className="sr-only">{t.project.openDetails}</span>
+        </button>
+      </DialogTrigger>
       {showVideo && project.videoUrl && shouldLoad && (
         <>
           {!isMuted && (
@@ -850,46 +841,6 @@ function MediaVisual({
           >
             {isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
           </button>
-          <button
-            type="button"
-            className="media-expand-button"
-            aria-label={t.media.openVideo}
-            title={t.media.openVideo}
-            onClick={(event) => {
-              event.stopPropagation();
-              handlePreviewOpenChange(true);
-            }}
-          >
-            <Expand size={12} strokeWidth={1.7} />
-          </button>
-          <Dialog open={previewOpen} onOpenChange={handlePreviewOpenChange}>
-            <DialogContent className="media-preview-dialog">
-              <DialogTitle className="media-preview-dialog-accessible-title">
-                {t.project.videoPreview}
-              </DialogTitle>
-              <motion.video
-                className="media-preview-dialog-video"
-                src={project.videoUrl}
-                poster={project.thumbnail || undefined}
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, scale: 0.97, y: 12 }
-                }
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{
-                  duration: prefersReducedMotion ? 0 : 0.45,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                autoPlay
-                controls
-                loop
-                playsInline
-                muted={isMuted}
-                preload="auto"
-              />
-            </DialogContent>
-          </Dialog>
         </>
       )}
       {project.placeholder && (
@@ -902,9 +853,13 @@ function MediaVisual({
 function ProjectCard({
   project,
   index = 0,
+  isPaused,
+  onOpen,
 }: {
   project: Project;
   index?: number;
+  isPaused: boolean;
+  onOpen: () => void;
 }) {
   const { t } = useLanguage();
   const category =
@@ -918,7 +873,13 @@ function ProjectCard({
         className="project-card group"
         data-testid={`card-project-${project.slug}`}
       >
-        <MediaVisual project={project} showVideo priority={index < 2} />
+        <MediaVisual
+          project={project}
+          showVideo
+          priority={index < 2}
+          isPaused={isPaused}
+          onOpen={onOpen}
+        />
         <div className="project-card-meta">
           <p className="project-kicker">{category}</p>
         </div>
@@ -986,7 +947,80 @@ function buildMosaicOrder(items: Project[]) {
   return ordered;
 }
 
+function ProjectDetailDialog({ project }: { project: Project }) {
+  const { t } = useLanguage();
+  const [videoError, setVideoError] = useState(false);
+  const title =
+    t.projectTitles[project.slug as keyof typeof t.projectTitles] ??
+    project.title;
+  const description =
+    t.projectDescriptions[
+      project.slug as keyof typeof t.projectDescriptions
+    ] ?? project.description;
+  const category =
+    project.category === "MOTION DESIGN" ? t.filters.motion : t.filters.editing;
+
+  return (
+    <DialogContent
+      className="project-detail-dialog"
+      closeLabel={t.project.close}
+      overlayClassName="project-detail-overlay"
+    >
+      <div className="project-window-bar" aria-hidden="true">
+        <span className="project-window-control is-yellow" />
+        <span className="project-window-control is-green" />
+        <span className="project-window-caption">{title}</span>
+      </div>
+      <div className="project-detail-layout">
+        <div className="project-detail-media">
+          <video
+            className="project-detail-video"
+            src={project.videoUrl}
+            poster={project.thumbnail}
+            controls
+            loop
+            playsInline
+            preload="metadata"
+            onError={() => setVideoError(true)}
+            aria-label={`${title} ${t.project.videoPreview}`}
+          />
+          {videoError && (
+            <p className="project-video-error" role="alert">
+              {t.project.videoError}
+            </p>
+          )}
+        </div>
+        <aside className="project-detail-info">
+          <p className="project-detail-category">{category}</p>
+          <DialogTitle className="project-detail-title">
+            {title}
+          </DialogTitle>
+          <p className="project-detail-description">{description}</p>
+          <dl className="project-detail-metadata">
+            <div>
+              <dt>{t.project.role}</dt>
+              <dd>
+                {project.category === "MOTION DESIGN"
+                  ? t.projectRoles.motion
+                  : t.projectRoles.editing}
+              </dd>
+            </div>
+            {project.client && (
+              <div>
+                <dt>{t.project.client}</dt>
+                <dd>{project.client}</dd>
+              </div>
+            )}
+          </dl>
+        </aside>
+      </div>
+    </DialogContent>
+  );
+}
+
 function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const visibleProjects =
     filter === "ALL"
       ? projects
@@ -996,11 +1030,26 @@ function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
     : visibleProjects;
   const orderedProjects = buildMosaicOrder(displayedProjects);
   return (
-    <div className="work-grid">
-      {orderedProjects.map((project, index) => (
-        <ProjectCard key={project.slug} project={project} index={index} />
-      ))}
-    </div>
+    <Dialog
+      open={dialogOpen}
+      onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) setSelectedProject(null);
+      }}
+    >
+      <div className="work-grid">
+        {orderedProjects.map((project, index) => (
+          <ProjectCard
+            key={project.slug}
+            project={project}
+            index={index}
+            isPaused={dialogOpen}
+            onOpen={() => setSelectedProject(project)}
+          />
+        ))}
+      </div>
+      {selectedProject && <ProjectDetailDialog project={selectedProject} />}
+    </Dialog>
   );
 }
 
