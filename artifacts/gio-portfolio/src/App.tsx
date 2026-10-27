@@ -1030,8 +1030,11 @@ function WorkGrid({ filter, limit }: { filter: Filter; limit?: number }) {
     : visibleProjects;
   // motion design first, then video editing; each group is mixed on its own
   const orderedProjects = [
+    ...displayedProjects.filter((p) => p.slug === "project-25"),
     ...buildMosaicOrder(
-      displayedProjects.filter((p) => p.category === "MOTION DESIGN"),
+      displayedProjects.filter(
+        (p) => p.category === "MOTION DESIGN" && p.slug !== "project-25",
+      ),
     ),
     ...buildMosaicOrder(
       displayedProjects.filter((p) => p.category !== "MOTION DESIGN"),
