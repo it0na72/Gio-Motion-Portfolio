@@ -142,8 +142,8 @@ body::after {
   right: 0;
   height: 84px;
   pointer-events: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   transform: translateZ(0);
 }
 body::before {
@@ -775,9 +775,8 @@ body::after {
 .project-detail-dialog {
   position: fixed;
   z-index: 51;
-  inset: auto;
-  top: 50%;
-  left: 50%;
+  inset: 0;
+  margin: auto;
   display: flex;
   width: min(1120px, calc(100vw - 48px));
   height: min(760px, calc(100dvh - 48px));
@@ -793,15 +792,15 @@ body::after {
   color: hsl(var(--foreground));
   box-shadow: 0 32px 100px hsl(0 0% 0% / 0.38);
   translate: none;
-  transform: translate(-50%, -50%);
-  animation: project-window-enter 420ms var(--ease-editorial) both;
+  transform: none;
+  animation: project-window-fade 360ms var(--ease-editorial) both;
 }
-/* higher specificity so the shared dialog's tailwind animate classes can't drop the centering */
+/* centering uses inset+margin; neutralise the shared dialog's tailwind transforms/animations */
 .project-detail-dialog.project-detail-dialog[data-state] {
-  top: 50% !important;
-  left: 50% !important;
+  inset: 0 !important;
+  margin: auto !important;
   translate: none !important;
-  transform: translate(-50%, -50%) !important;
+  transform: none !important;
   animation: project-window-fade 360ms var(--ease-editorial) both !important;
 }
 .project-detail-dialog.project-detail-dialog[data-state="closed"] {
@@ -990,16 +989,6 @@ body::after {
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes project-window-enter {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 16px)) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
   }
 }
 .volume-slider {
@@ -1953,8 +1942,8 @@ body::after {
     hsl(var(--background) / 0.7),
     hsl(var(--background) / 0)
   );
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
   opacity: 0;
